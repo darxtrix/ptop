@@ -26,8 +26,28 @@ class Plugin:
         self.currentValue = initialValue
 
     def update(self):
-        '''updates the plugin value
+        '''updates the plugin currentValue
 
         :rtype: dict 
         '''
-        # to be overrided by child class
+        # to be overrided by the child class
+
+    @property
+    def text_info(self):
+        '''return the text part of the currentValue
+
+        :rtype: dict
+        '''
+        return self.currentValue['text']
+
+    @property
+    def graph_info(self):
+        '''return the graph part of the currentValue
+
+        :rtype: dict
+        '''
+        try:
+            return self.currentValue['graph']
+        except KeyError:
+            raise Exception('The plugin does not have any graphical information')
+
