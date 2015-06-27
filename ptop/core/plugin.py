@@ -51,3 +51,14 @@ class Plugin:
         except KeyError:
             raise Exception('The plugin does not have any graphical information')
 
+    @property
+    def table_info(self):
+        '''return the table part of the currentValue
+
+        :rtype: list
+        '''
+        try:
+            return self.currentValue['table']
+        except KeyError:
+            raise Exception('The plugin does not have any tabular information')
+
