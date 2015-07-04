@@ -5,7 +5,10 @@
     to render the info in the GUI
 '''
 
-import socket, getpass, os
+import os, threading
+from ptop.utils import ThreadJob
+from ptop.plugins import SENSORS_LIST
+
 
 class Statistics:
     def __init__(self):
@@ -13,11 +16,22 @@ class Statistics:
             Record keeping for primitive system parameters
         '''
         self.plugin_dir = os.path.join(os.path.dirname(__file__),'plugins') #plugins directory
-        self.plugins = [ a.split('.py')[0] for a in next(os.walk(self.plugin_dir))[2] ] #plugins list
+        self.plugins = SENSORS_LIST # plugins list
+        self.statistics = {} # statistics object to be passed to the GUI
+        for sensor in self.plugins:
+            self.statistics[sensor.name] = sensor.currentValue
+        self.stop_event = threading.Event()
 
     def generate(self):
         '''
             Generate the stats using the plugins list periodically
         '''
+        for sensor in self.plugins:
+            # update the sensors value periodically
+            job = ThreadJob(sensor.update,self.stop_event,sensor.interval)
+            job.start()
+
+
+
         
 
