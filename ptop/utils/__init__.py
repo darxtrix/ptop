@@ -1,1 +1,1 @@
-from .set_interval import setInterval
+from .thread_jobs import ThreadJob
