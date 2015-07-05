@@ -7,16 +7,15 @@
 
 import os, threading
 from ptop.utils import ThreadJob
-from ptop.plugins import SENSORS_LIST
 
 
 class Statistics:
-    def __init__(self):
+    def __init__(self,sensors_list):
         '''
             Record keeping for primitive system parameters
         '''
         self.plugin_dir = os.path.join(os.path.dirname(__file__),'plugins') #plugins directory
-        self.plugins = SENSORS_LIST # plugins list
+        self.plugins = sensors_list # plugins list
         self.statistics = {} # statistics object to be passed to the GUI
         for sensor in self.plugins:
             self.statistics[sensor.name] = sensor.currentValue
