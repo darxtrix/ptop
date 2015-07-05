@@ -25,13 +25,13 @@ class ProcessSensor(Plugin):
             # info of a single process
             proc_info = {}
             proc_info['id'] = proc.pid
-            proc_info['name'] = proc.name
+            proc_info['name'] = proc.name()
             # getting more info about the process
             p = psutil.Process(proc.pid)
             proc_info['user'] = p.username()
             proc_info['time'] = datetime.timedelta(seconds=(time.time() - p.create_time()))
             proc_info['cpu'] = p.cpu_percent()
-            proc_info['memory'] = p.memory_percent()
+            proc_info['memory'] = round(p.memory_percent(),2)
             proc_info['command'] = ' '.join(p.cmdline())
             # increamenting the thread_count and proc_count
             thread_count += p.num_threads()
@@ -43,7 +43,7 @@ class ProcessSensor(Plugin):
         self.currentValue['text']['running_threads'] = str(thread_count)
 
 
-process_sensor = ProcessSensor(name='Process',sensorType='table',interval=0.5)
+process_sensor = ProcessSensor(name='Process',sensorType='table',interval=1)
 
 
 
