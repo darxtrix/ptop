@@ -20,13 +20,22 @@ $ ptop -t <theme>
 ```
 
 
-##Supported themes
+## Supported themes
 
 - `colorful`     
 - `elegant`    
 - `simple`    
 - `dark`   
 - `light` etc.
+
+
+## Some Screenshots
+
+![ptop-1](https://github.com/black-perl/ptop/blob/master/docs/ptop1.png)
+
+![ptop-2](https://github.com/black-perl/ptop/blob/master/docs/ptop.png)
+
+![ptop-3](https://github.com/black-perl/ptop/blob/master/docs/ptop2.png)
 
 
 ##Help
@@ -61,6 +70,7 @@ $ cd ptop
 ## Main Dependencies
 - [npyscreen](https://pypi.python.org/pypi/npyscreen)
 - [psutil](https://pypi.python.org/pypi/psutil)
+- [drawille](https://github.com/asciimoo/drawille)
 
 
 ## Contributions
