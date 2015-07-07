@@ -6,8 +6,9 @@
 '''
 
 import os
-from ptop.utils import ThreadJob
 import logging
+from ptop.utils import ThreadJob
+
 
 logger = logging.getLogger('ptop.statistics')
 

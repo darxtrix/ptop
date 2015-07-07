@@ -1,9 +1,9 @@
 import threading, logging
 import argparse
-from ptop import __version__
+from ptop import __version__, _log_file
 from ptop.statistics import Statistics
-from interfaces import PtopGUI
-from plugins import SENSORS_LIST
+from ptop.interfaces import PtopGUI
+from ptop.plugins import SENSORS_LIST
 
 logger = logging.getLogger('ptop.main')
 
@@ -49,7 +49,7 @@ def main():
     except KeyboardInterrupt:
         global_stop_event.set()
         # clear log file
-        with open('./logs/ptop.log', 'w'):
+        with open(_log_file,'w'):
             pass
         raise SystemExit
 

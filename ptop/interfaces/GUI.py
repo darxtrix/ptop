@@ -4,9 +4,8 @@
 
 import npyscreen, math
 import psutil, logging
-import sys
 from drawille import Canvas
-from utils import ThreadJob
+from ptop.utils import ThreadJob
 
 # global flags defining actions, would like them to be object vars
 TIME_SORT = False
