@@ -5,12 +5,12 @@
     to render the info in the GUI
 '''
 
-import os, threading
+import os
 from ptop.utils import ThreadJob
 
 
 class Statistics:
-    def __init__(self,sensors_list):
+    def __init__(self,sensors_list,stop_event):
         '''
             Record keeping for primitive system parameters
         '''
@@ -19,7 +19,7 @@ class Statistics:
         self.statistics = {} # statistics object to be passed to the GUI
         for sensor in self.plugins:
             self.statistics[sensor.name] = sensor.currentValue
-        self.stop_event = threading.Event()
+        self.stop_event = stop_event
 
     def generate(self):
         '''
