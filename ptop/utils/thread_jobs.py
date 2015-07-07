@@ -14,7 +14,6 @@ class ThreadJob(threading.Thread):
         :param interval: time in seconds after which are required to fire the callback
         :type callback: function
         :type interval: int
-        super(ThreadJob,self).__init__(kwargs)
         '''
         self.callback = callback
         self.event = event
