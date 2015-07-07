@@ -10,6 +10,7 @@ setup(
     author_email='ankprashar@gmail.com',
     url='https://github.com/black-perl/ptop',
     license='MIT',
+    download_url= 'https://github.com/black-perl/ptop/tarball/0.0.1',
     packages=['ptop', 'ptop.core', 'ptop.logs', 'ptop.plugins', 'ptop.interfaces','ptop.statistics','ptop.utils'],
     install_requires=[
         "npyscreen>=4.9.1",
@@ -19,5 +20,6 @@ setup(
     ],
     entry_points={
         'console_scripts': ['ptop = ptop.main:main']
-    }
+    },
+
 )
