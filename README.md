@@ -48,7 +48,7 @@ $ ptop -h
 ## Known Issues
 
 - Sometimes garbage text appears on the screen, press `Ctrl` + `L` to **clear**. (Anybody having idea about this ?)
-- Though ptop is responsive across various terminal sizes, but sometimes things may break.
+- Though ptop is responsive across various terminal sizes as positioning is done according to terminal sizes, but sometimes things may break. If so, then try in a terminal of bigger size.
 
 
 ## Development
