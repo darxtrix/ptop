@@ -96,8 +96,8 @@ class PtopGUI(npyscreen.NPSApp):
         # the upper bounds are the excluded points
         self.CHART_HEIGHT = 32
         self.CHART_LENGTH = 90
-        self.cpu_array = [0]*self.CHART_LENGTH
-        self.memory_array = [0]*self.CHART_LENGTH
+        self.cpu_array = None
+        self.memory_array = None
 
         # logger
         self.logger = logging.getLogger('ptop.GUI')
@@ -304,6 +304,10 @@ class PtopGUI(npyscreen.NPSApp):
 
         self.CHART_LENGTH = int(self.CHART_LENGTH*self.X_SCALING_FACTOR)
         self.CHART_HEIGHT = int(self.CHART_HEIGHT*self.Y_SCALING_FACTOR)
+
+        # fix for index error
+        self.cpu_array = [0]*self.CHART_LENGTH
+        self.memory_array = [0]*self.CHART_LENGTH
 
         # add subwidgets to the parent widget
         self.window.edit()
