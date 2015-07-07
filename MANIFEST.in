@@ -1,0 +1,5 @@
+setup.cfg
+setup.py
+include README.md
+include requirements.txt
+include LICENSE.txt
