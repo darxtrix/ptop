@@ -5,6 +5,39 @@
 import npyscreen, math
 from drawille import Canvas
 from utils import ThreadJob
+import os, psutil
+
+# global flags defining actions, would like them to be object vars
+TIME_SORT = False
+MEMORY_SORT = False
+
+class CustomMultiLineAction(npyscreen.MultiLineAction):
+    '''
+        Making custom MultiLineAction by adding the handlers
+    '''
+    def __init__(self,*args,**kwargs):
+        super(CustomMultiLineAction,self).__init__(*args,**kwargs)
+        self.add_handlers({
+            "^N": self.sort_by_memory,
+            "^H": self.sort_by_time,
+            "^K": self.kill_process
+        })
+
+    def sort_by_time(self,*args,**kwargs):
+        # fuck .. that's why NPSManaged was required, i.e you can access the app instance within widgets
+        global TIME_SORT,MEMORY_SORT
+        MEMORY_SORT = False
+        TIME_SORT = True
+
+    def sort_by_memory(self,*args,**kwargs):
+        global TIME_SORT,MEMORY_SORT
+        TIME_SORT = False
+        MEMORY_SORT = True
+
+    def kill_process(self,*args,**kwargs):
+        pid = self.values[self.cursor_line].split()[1]
+        target = psutil.Process(int(pid))
+        target.terminate()
 
 
 class MultiLineWidget(npyscreen.BoxTitle):
@@ -18,7 +51,7 @@ class MultiLineActionWidget(npyscreen.BoxTitle):
     '''
         A framed widget containing multiline text
     '''
-    _contained_widget = npyscreen.MultiLineAction
+    _contained_widget = CustomMultiLineAction
 
 
 class WindowForm(npyscreen.FormBaseNew):
@@ -143,24 +176,39 @@ class PtopGUI(npyscreen.NPSApp):
 
             ### processes_table
             processes_table = self.statistics['Process']['table']
-            for proc in processes_table:
+
+            # check sorting flags
+            if MEMORY_SORT:
+                sorted_table = sorted(processes_table,key=lambda k:k['memory'],reverse=True)
+            elif TIME_SORT:
+                sorted_table = sorted(processes_table,key=lambda k:k['time'],reverse=True)
+            else:
+                sorted_table = processes_table
+
+            # to keep things pre computed
+            temp_list = []
+            for proc in sorted_table:
                 if proc['user'] == system_info['user']:
-                    self.processes_table.entry_widget.values.append("{0: <30} {1: >4}       {2: <10}        {3: <4} %         {4: <4} % \
+                    temp_list.append("{0: <30} {1: >5}       {2: <10}        {3: <8}         {4: <4} % \
                     ".format( (proc['name'][:25] + '...') if len(proc['name']) > 25 else proc['name'],
                                proc['id'],
                                proc['user'],
-                               proc['cpu'],
+                               proc['time'],
                                proc['memory'])
                     )
-
+            self.processes_table.entry_widget.values = temp_list
             self.processes_table.display()
 
-        # catch the fucking KeyError caused to cumbersome point of reading the stats data structures
+        # catch the fucking KeyError caused to c
+        # cumbersome point of reading the stats data structures
         except KeyError:
             pass
 
     def main(self):
-        npyscreen.setTheme(npyscreen.Themes.TransparentThemeDarkText)
+        os.system('clear')
+
+        # npyscreen.setTheme(npyscreen.Themes.TransparentThemeDarkText)
+        npyscreen.setTheme(npyscreen.Themes.ColorfulTheme)
 
         # time(ms) to wait for user interactions
         self.keypress_timeout_default = 10
@@ -186,7 +234,8 @@ class PtopGUI(npyscreen.NPSApp):
         self.processes_table.entry_widget.scroll_exit = False
 
         self.actions = self.window.add(npyscreen.FixedText,relx=1,rely=24)
-        self.actions.value = ""
+        self.actions.value = "^K : Kill     ^N : Sort by Memory     ^H : Sort by Time      g : top "
+        self.actions.display()
         self.actions.editable = False
 
 
