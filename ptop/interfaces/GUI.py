@@ -3,9 +3,10 @@
 '''
 
 import npyscreen, math
+import psutil, logging
+import sys
 from drawille import Canvas
 from utils import ThreadJob
-import psutil, logging
 
 # global flags defining actions, would like them to be object vars
 TIME_SORT = False
@@ -20,7 +21,8 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         self.add_handlers({
             "^N": self.sort_by_memory,
             "^H": self.sort_by_time,
-            "^K": self.kill_process
+            "^K": self.kill_process,
+            "q" : self.quit
         })
 
     def sort_by_time(self,*args,**kwargs):
@@ -38,6 +40,9 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         pid = self.values[self.cursor_line].split()[1]
         target = psutil.Process(int(pid))
         target.terminate()
+
+    def quit(self,*args,**kwargs):
+        raise KeyboardInterrupt
 
 
 class MultiLineWidget(npyscreen.BoxTitle):
@@ -242,7 +247,7 @@ class PtopGUI(npyscreen.NPSApp):
 
         # setting the main window form
         self.window = WindowForm(parentApp=self,
-                                 name="ptop ( http://github.com/black-perl) ")
+                                 name="ptop ( http://github.com/black-perl/ptop) ")
 
         self.logger.info(self.window.curses_pad.getmaxyx())
 
@@ -297,7 +302,7 @@ class PtopGUI(npyscreen.NPSApp):
                                        relx=1,
                                        rely=int(24*self.Y_SCALING_FACTOR)
                                        )
-        self.actions.value = "^K : Kill     ^N : Sort by Memory     ^H : Sort by Time      g : top "
+        self.actions.value = "^K : Kill     ^N : Sort by Memory     ^H : Sort by Time      g : top    q : quit "
         self.actions.display()
         self.actions.editable = False
 
