@@ -1,3 +1,4 @@
-npyscreen==4.9.1,
+npyscreen==4.9.1
 psutil==3.0.1
 argparse==1.2.1
+drawille==0.0.4
