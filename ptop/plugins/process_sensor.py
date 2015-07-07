@@ -9,13 +9,15 @@ import datetime, time
 
 class ProcessSensor(Plugin):
     def __init__(self,**kwargs):
+        self.running_processes = 0
+        self.running_threads = 0
         super(ProcessSensor,self).__init__(**kwargs)
 
     # overriding the upate method
     def update(self):
         # there will be two parts of the returned value, one will be text and other graph
         # there can be many text (key,value) pairs to display corresponding to each key
-        self.currentValue['text'] = { 'running_processes' : '','running_threads' : 0}
+        self.currentValue['text'] = { 'running_processes' : self.running_processes,'running_threads' : self.running_threads}
         # nested structure is used for keeping the info of processes
         self.currentValue['table'] = []
         # flood the data
@@ -39,10 +41,10 @@ class ProcessSensor(Plugin):
             # recording the info
             self.currentValue['table'].append(proc_info)
 
-        self.currentValue['text']['running_processes'] = str(proc_count)
-        self.currentValue['text']['running_threads'] = str(thread_count)
+        self.running_processes = str(proc_count)
+        self.running_threads = str(thread_count)
 
-
+# make the process sensor less frequent as it takes more time to fetch info
 process_sensor = ProcessSensor(name='Process',sensorType='table',interval=1)
 
 

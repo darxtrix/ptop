@@ -30,7 +30,7 @@ class MemorySensor(Plugin):
         self.currentValue['text']['swap_memory']['percentage'] = int(float(smem.used)/smem.total)*100
 
 
-memory_sensor = MemorySensor(name='Memory',sensorType='chart',interval=1)
+memory_sensor = MemorySensor(name='Memory',sensorType='chart',interval=0.5)
 
 
 
