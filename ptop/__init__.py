@@ -8,7 +8,7 @@
 import sys,os
 import logging
 
-__version__ = '0.0.5'
+__version__ = '0.0.6'
 
 __dir__ = os.path.dirname(__file__)
 
