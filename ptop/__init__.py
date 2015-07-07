@@ -1,5 +1,14 @@
+# -*- coding: utf-8 -*-
+'''
+    ptop(http://github.com/black-perl)
+
+    Author : Ankush Sharma (http://black-perl.me)
+    Licence : MIT © 2015
+'''
 import sys,os
 import logging
+
+__version__ = '0.0.1'
 
 # setting the config
 logging.basicConfig(filename='./logs/ptop.log',
