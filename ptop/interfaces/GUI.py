@@ -5,7 +5,7 @@
 import npyscreen, math
 from drawille import Canvas
 from utils import ThreadJob
-import os, psutil
+import psutil, logging
 
 # global flags defining actions, would like them to be object vars
 TIME_SORT = False
@@ -90,6 +90,8 @@ class PtopGUI(npyscreen.NPSApp):
         self.memory_array = [0]*self.CHART_LENGTH
         # Global stop event
         self.stop_event = stop_event
+        # logger
+        self.logger = logging.getLogger('ptop.GUI')
 
     def draw_chart(self,canvas,y,chart_type):
         '''
@@ -126,6 +128,7 @@ class PtopGUI(npyscreen.NPSApp):
             t = ThreadJob(self.update,self.stop_event,1)
             self.update_thread = t
             self.update_thread.start()
+            self.logger.info('Started GUI update thread')
 
     def update(self):
         '''
@@ -141,23 +144,29 @@ class PtopGUI(npyscreen.NPSApp):
             cpu_info = self.statistics['CPU']['graph']
 
             # overview 
-            row1 = "Disk Usage (/)    {0: <6}/{1: >6} MB     {2: >2} % \
-                    Processes         {3: >8}".format(disk_info["used"],
+            row1 = "Disk Usage (/) {4}{0: <6}/{1: >6} MB{4}{2: >2} % \
+                    Processes{5}{3: <8}".format(disk_info["used"],
                                                       disk_info["total"],
                                                       disk_info["percentage"],
-                                                      processes_info["running_processes"])
+                                                      processes_info["running_processes"],
+                                                      " "*int(4*self.X_SCALING_FACTOR),
+                                                      " "*int(9*self.X_SCALING_FACTOR))
 
-            row2 = "Swap Memory       {0: <6}/{1: >6} MB     {2: >2} % \
-                    Threads           {3: >8}".format(swap_info["active"],
+            row2 = "Swap Memory    {4}{0: <6}/{1: >6} MB{4}{2: >2} % \
+                    Threads  {5}{3: <8}".format(swap_info["active"],
                                                       swap_info["total"],
                                                       swap_info["percentage"],
-                                                      processes_info["running_threads"])
+                                                      processes_info["running_threads"],
+                                                      " "*int(4*self.X_SCALING_FACTOR),
+                                                      " "*int(9*self.X_SCALING_FACTOR))
 
-            row3 = "Main memory       {0: <6}/{1: >6} MB     {2: >2} % \
-                    Boot Time         {3: >8}".format(memory_info["active"],
+            row3 = "Main Memory    {4}{0: <6}/{1: >6} MB{4}{2: >2} % \
+                    Boot Time{5}{3: <8}".format(memory_info["active"],
                                                       memory_info["total"],
                                                       memory_info["percentage"],
-                                                      system_info['running_time'])
+                                                      system_info['running_time'],
+                                                      " "*int(4*self.X_SCALING_FACTOR),
+                                                      " "*int(9*self.X_SCALING_FACTOR))
 
             self.basic_stats.value = row1 + '\n' + row2 + '\n' + row3
             self.basic_stats.display()
@@ -165,7 +174,7 @@ class PtopGUI(npyscreen.NPSApp):
             ### cpu_usage chart
             cpu_canvas = Canvas()
             next_peak_height = int(math.ceil((float(cpu_info['percentage'])/100)*self.CHART_HEIGHT))
-            self.cpu_chart.value = self.draw_chart(cpu_canvas,next_peak_height,'cpu')
+            self.cpu_chart.value = (self.draw_chart(cpu_canvas,next_peak_height,'cpu'))
             self.cpu_chart.display()
 
             ### memory_usage chart
@@ -189,12 +198,13 @@ class PtopGUI(npyscreen.NPSApp):
             temp_list = []
             for proc in sorted_table:
                 if proc['user'] == system_info['user']:
-                    temp_list.append("{0: <30} {1: >5}       {2: <10}        {3: <8}         {4: <4} % \
+                    temp_list.append("{0: <30} {1: >5}{5}{2: <10}{5}{3: <8}{5}{4: <4} % \
                     ".format( (proc['name'][:25] + '...') if len(proc['name']) > 25 else proc['name'],
                                proc['id'],
                                proc['user'],
                                proc['time'],
-                               proc['memory'])
+                               proc['memory'],
+                               " "*int(5*self.X_SCALING_FACTOR))
                     )
             self.processes_table.entry_widget.values = temp_list
             self.processes_table.display()
@@ -205,39 +215,75 @@ class PtopGUI(npyscreen.NPSApp):
             pass
 
     def main(self):
-        os.system('clear')
-
         # npyscreen.setTheme(npyscreen.Themes.TransparentThemeDarkText)
-        npyscreen.setTheme(npyscreen.Themes.ColorfulTheme)
+        npyscreen.setTheme(npyscreen.Themes.TransparentThemeDarkText)
 
         # time(ms) to wait for user interactions
         self.keypress_timeout_default = 10
 
         # setting the main window form
-        self.window = WindowForm(parentApp=self,name="ptop")
-        # use gridss
-        self.basic_stats = self.window.add(MultiLineWidget,name="Overview",relx=1,rely=1,max_height=5,max_width=100)
+        self.window = WindowForm(parentApp=self,
+                                 name="ptop")
+
+        self.logger.info(self.window.curses_pad.getmaxyx())
+
+        max_y,max_x = self.window.curses_pad.getmaxyx()
+
+        self.Y_SCALING_FACTOR = float(max_y)/27
+        self.X_SCALING_FACTOR = float(max_x)/104
+
+        self.basic_stats = self.window.add(MultiLineWidget,
+                                           name="Overview",
+                                           relx=1,
+                                           rely=1,
+                                           max_height=int(math.ceil(5*self.Y_SCALING_FACTOR)),
+                                           max_width=int(100*self.X_SCALING_FACTOR)
+                                           )
         self.basic_stats.value = ""
         self.basic_stats.entry_widget.editable = False
 
 
-        self.memory_chart = self.window.add(MultiLineWidget,name="Memory Usage",relx=1,rely=6,max_height=10,max_width=50)
+        self.memory_chart = self.window.add(MultiLineWidget,
+                                            name="Memory Usage",
+                                            relx=1,
+                                            rely=int(math.ceil(5*self.Y_SCALING_FACTOR)+1),
+                                            max_height=int(10*self.Y_SCALING_FACTOR),
+                                            max_width=int(50*self.X_SCALING_FACTOR)
+                                            )
         self.memory_chart.value = ""
         self.memory_chart.entry_widget.editable = False
 
-        self.cpu_chart = self.window.add(MultiLineWidget,name="CPU Usage",relx=52,rely=6,max_height=10,max_width=49)
+        self.cpu_chart = self.window.add(MultiLineWidget,
+                                         name="CPU Usage",
+                                         relx=int(52*self.X_SCALING_FACTOR),
+                                         rely=int(math.ceil(5*self.Y_SCALING_FACTOR)+1),
+                                         max_height=int(10*self.Y_SCALING_FACTOR),
+                                         max_width=int(49*self.X_SCALING_FACTOR)
+                                         )
         self.cpu_chart.value = ""
         self.cpu_chart.entry_widget.editable = False
 
-        self.processes_table = self.window.add(MultiLineActionWidget,name="Processes",relx=1,rely=16,max_height=8,max_width=100)
+        self.processes_table = self.window.add(MultiLineActionWidget,
+                                               name="Processes",
+                                               relx=1,
+                                               rely=int(16*self.Y_SCALING_FACTOR),
+                                               max_height=int(8*self.Y_SCALING_FACTOR),
+                                               max_width=int(100*self.X_SCALING_FACTOR)
+                                               )
+
         self.processes_table.entry_widget.values = []
         self.processes_table.entry_widget.scroll_exit = False
 
-        self.actions = self.window.add(npyscreen.FixedText,relx=1,rely=24)
+        self.actions = self.window.add(npyscreen.FixedText,
+                                       relx=1,
+                                       rely=int(24*self.Y_SCALING_FACTOR)
+                                       )
         self.actions.value = "^K : Kill     ^N : Sort by Memory     ^H : Sort by Time      g : top "
         self.actions.display()
         self.actions.editable = False
 
+        self.CHART_LENGTH = int(self.CHART_LENGTH*self.X_SCALING_FACTOR)
+        self.CHART_HEIGHT = int(self.CHART_HEIGHT*self.Y_SCALING_FACTOR)
 
         # add subwidgets to the parent widget
         self.window.edit()
