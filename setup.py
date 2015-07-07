@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='ptop',
-    version='0.0.1',
+    version='0.0.2',
     description='A task manager written in Python',
     long_description=open('README.md').read(),
     keywords='top ptop task manager python',
