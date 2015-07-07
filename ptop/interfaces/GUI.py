@@ -168,29 +168,26 @@ class PtopGUI(npyscreen.NPSApp):
             cpu_info = self.statistics['CPU']['graph']
 
             # overview 
-            row1 = "Disk Usage (/) {4}{0: <6}/{1: >6} MB{4}{2: >2} % \
-                    Processes{5}{3: <8}".format(disk_info["used"],
-                                                      disk_info["total"],
-                                                      disk_info["percentage"],
-                                                      processes_info["running_processes"],
-                                                      " "*int(4*self.X_SCALING_FACTOR),
-                                                      " "*int(9*self.X_SCALING_FACTOR))
+            row1 = "Disk Usage (/) {4}{0: <6}/{1: >6} MB{4}{2: >2} %{5}Processes{4}{3: <8}".format(disk_info["used"],
+                                                                                                   disk_info["total"],
+                                                                                                   disk_info["percentage"],
+                                                                                                   processes_info["running_processes"],
+                                                                                                   " "*int(4*self.X_SCALING_FACTOR),
+                                                                                                   " "*int(9*self.X_SCALING_FACTOR))
 
-            row2 = "Swap Memory    {4}{0: <6}/{1: >6} MB{4}{2: >2} % \
-                    Threads  {5}{3: <8}".format(swap_info["active"],
-                                                      swap_info["total"],
-                                                      swap_info["percentage"],
-                                                      processes_info["running_threads"],
-                                                      " "*int(4*self.X_SCALING_FACTOR),
-                                                      " "*int(9*self.X_SCALING_FACTOR))
+            row2 = "Swap Memory    {4}{0: <6}/{1: >6} MB{4}{2: >2} %{5}Threads  {4}{3: <8}".format(swap_info["active"],
+                                                                                                   swap_info["total"],
+                                                                                                   swap_info["percentage"],
+                                                                                                   processes_info["running_threads"],
+                                                                                                   " "*int(4*self.X_SCALING_FACTOR),
+                                                                                                   " "*int(9*self.X_SCALING_FACTOR))
 
-            row3 = "Main Memory    {4}{0: <6}/{1: >6} MB{4}{2: >2} % \
-                    Boot Time{5}{3: <8}".format(memory_info["active"],
-                                                      memory_info["total"],
-                                                      memory_info["percentage"],
-                                                      system_info['running_time'],
-                                                      " "*int(4*self.X_SCALING_FACTOR),
-                                                      " "*int(9*self.X_SCALING_FACTOR))
+            row3 = "Main Memory    {4}{0: <6}/{1: >6} MB{4}{2: >2} %{5}Boot Time{4}{3: <8}".format(memory_info["active"],
+                                                                                                   memory_info["total"],
+                                                                                                   memory_info["percentage"],
+                                                                                                   system_info['running_time'],
+                                                                                                   " "*int(4*self.X_SCALING_FACTOR),
+                                                                                                   " "*int(9*self.X_SCALING_FACTOR))
 
             self.basic_stats.value = row1 + '\n' + row2 + '\n' + row3
             self.basic_stats.display()
