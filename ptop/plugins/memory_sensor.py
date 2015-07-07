@@ -9,14 +9,14 @@ import psutil
 class MemorySensor(Plugin):
     def __init__(self,**kwargs):
         super(MemorySensor,self).__init__(**kwargs)
-
-    # overriding the update method
-    def update(self):
         # there will be two parts of the returned value, one will be text and other graph
         # there can be many text (key,value) pairs to display corresponding to each key
         self.currentValue['text'] = { 'memory' : {},'swap_memory' : {}}
         # there will be only one graph info
         self.currentValue['graph'] = {'percentage' : ''}
+
+    # overriding the update method
+    def update(self):
         # virtual memory
         vmem = psutil.virtual_memory()
         self.currentValue['text']['memory']['total'] = int(float(vmem.total)/(1024*1024))

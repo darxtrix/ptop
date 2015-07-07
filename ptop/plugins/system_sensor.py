@@ -9,12 +9,12 @@ import datetime, time
 
 class SystemSensor(Plugin):
     def __init__(self,**kwargs):
+        # only text part for the system info
         super(SystemSensor,self).__init__(**kwargs)
+        self.currentValue['text'] = {}
 
     # overriding the update method
     def update(self):
-        # only text part for the system info
-        self.currentValue['text'] = {}
         # updating values
         self.currentValue['text']['user'] = getpass.getuser()
         self.currentValue['text']['host_name'] = socket.gethostname()

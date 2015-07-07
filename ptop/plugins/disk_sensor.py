@@ -7,11 +7,11 @@ import psutil
 class DiskSensor(Plugin):
     def __init__(self,**kwargs):
         super(DiskSensor,self).__init__(**kwargs)
+        # there can be many text (key,value) pairs to display corresponding to each key
+        self.currentValue['text'] = {'/' : {}}
 
     # overriding the update method
     def update(self):
-        # there can be many text (key,value) pairs to display corresponding to each key
-        self.currentValue['text'] = {'/' : {}}
         # no graph part will be there
         disk_usage = psutil.disk_usage('/')
         self.currentValue['text']['/']['total'] = int(float(disk_usage.total)/(1024*1024))

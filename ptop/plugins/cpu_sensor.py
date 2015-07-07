@@ -9,14 +9,14 @@ import psutil
 class CPUSensor(Plugin):
     def __init__(self,**kwargs):
         super(CPUSensor,self).__init__(**kwargs)
-
-    # overriding the update method
-    def update(self):
         # there will be two parts of the returned value, one will be text and other graph
         # there can be many text (key,value) pairs to display corresponding to each key
         self.currentValue['text'] = {}
         # there will be one averaged value
         self.currentValue['graph'] = {'percentage' : ''}
+
+    # overriding the update method
+    def update(self):
         # cpu usage
         cpu_usage = psutil.cpu_percent(percpu=True)
         num_cores = len(cpu_usage)
