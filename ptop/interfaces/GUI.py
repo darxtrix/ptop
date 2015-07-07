@@ -2,7 +2,7 @@
     Graphical User Interface for ptop
 '''
 
-import npyscreen, math, threading
+import npyscreen, math
 from drawille import Canvas
 from utils import ThreadJob
 
@@ -36,7 +36,7 @@ class PtopGUI(npyscreen.NPSApp):
     '''
         GUI class for ptop
     '''
-    def __init__(self,statistics):
+    def __init__(self,statistics,stop_event):
         self.statistics = statistics
         # main form
         self.window = None 
@@ -55,6 +55,8 @@ class PtopGUI(npyscreen.NPSApp):
         self.CHART_LENGTH = 90
         self.cpu_array = [0]*self.CHART_LENGTH
         self.memory_array = [0]*self.CHART_LENGTH
+        # Global stop event
+        self.stop_event = stop_event
 
     def draw_chart(self,canvas,y,chart_type):
         '''
@@ -78,7 +80,7 @@ class PtopGUI(npyscreen.NPSApp):
         for ctr in xrange(self.CHART_LENGTH):
             end_point = self.CHART_HEIGHT-chart_array[ctr]
             # end_point will be excluded
-            for i in xrange(32,end_point,-1):
+            for i in xrange(self.CHART_HEIGHT,end_point,-1):
                 canvas.set(ctr,i)
 
         return canvas.frame(0,0,self.CHART_LENGTH,self.CHART_HEIGHT)
@@ -88,7 +90,6 @@ class PtopGUI(npyscreen.NPSApp):
             called periodically when user is not pressing any key
         '''
         if not self.update_thread:
-            self.stop_event = threading.Event()
             t = ThreadJob(self.update,self.stop_event,1)
             self.update_thread = t
             self.update_thread.start()
@@ -98,60 +99,65 @@ class PtopGUI(npyscreen.NPSApp):
             Update the form in background
         '''
                 # get the information
-        disk_info = self.statistics['Disk']['text']['/']
-        swap_info = self.statistics['Memory']['text']['swap_memory']
-        memory_info = self.statistics['Memory']['text']['memory']
-        processes_info = self.statistics['Process']['text']
-        system_info = self.statistics['System']['text']
-        cpu_info = self.statistics['CPU']['graph']
+        try:
+            disk_info = self.statistics['Disk']['text']['/']
+            swap_info = self.statistics['Memory']['text']['swap_memory']
+            memory_info = self.statistics['Memory']['text']['memory']
+            processes_info = self.statistics['Process']['text']
+            system_info = self.statistics['System']['text']
+            cpu_info = self.statistics['CPU']['graph']
 
-        # overview 
-        row1 = "Disk Usage (/)    {0: <6}/{1: >6} MB     {2: >2} % \
-                Processes         {3: >8}".format(disk_info["used"],
-                                                  disk_info["total"],
-                                                  disk_info["percentage"],
-                                                  processes_info["running_processes"])
+            # overview 
+            row1 = "Disk Usage (/)    {0: <6}/{1: >6} MB     {2: >2} % \
+                    Processes         {3: >8}".format(disk_info["used"],
+                                                      disk_info["total"],
+                                                      disk_info["percentage"],
+                                                      processes_info["running_processes"])
 
-        row2 = "Swap Memory       {0: <6}/{1: >6} MB     {2: >2} % \
-                Threads           {3: >8}".format(swap_info["active"],
-                                                  swap_info["total"],
-                                                  swap_info["percentage"],
-                                                  processes_info["running_threads"])
+            row2 = "Swap Memory       {0: <6}/{1: >6} MB     {2: >2} % \
+                    Threads           {3: >8}".format(swap_info["active"],
+                                                      swap_info["total"],
+                                                      swap_info["percentage"],
+                                                      processes_info["running_threads"])
 
-        row3 = "Main memory       {0: <6}/{1: >6} MB     {2: >2} % \
-                Boot Time         {3: >8}".format(memory_info["active"],
-                                                  memory_info["total"],
-                                                  memory_info["percentage"],
-                                                  system_info['running_time'])
+            row3 = "Main memory       {0: <6}/{1: >6} MB     {2: >2} % \
+                    Boot Time         {3: >8}".format(memory_info["active"],
+                                                      memory_info["total"],
+                                                      memory_info["percentage"],
+                                                      system_info['running_time'])
 
-        self.basic_stats.value = row1 + '\n' + row2 + '\n' + row3
-        self.basic_stats.display()
+            self.basic_stats.value = row1 + '\n' + row2 + '\n' + row3
+            self.basic_stats.display()
 
-        ### cpu_usage chart
-        cpu_canvas = Canvas()
-        next_peak_height = int(math.ceil((float(cpu_info['percentage'])/100)*self.CHART_HEIGHT))
-        self.cpu_chart.value = self.draw_chart(cpu_canvas,next_peak_height,'cpu')
-        self.cpu_chart.display()
+            ### cpu_usage chart
+            cpu_canvas = Canvas()
+            next_peak_height = int(math.ceil((float(cpu_info['percentage'])/100)*self.CHART_HEIGHT))
+            self.cpu_chart.value = self.draw_chart(cpu_canvas,next_peak_height,'cpu')
+            self.cpu_chart.display()
 
-        ### memory_usage chart
-        memory_canvas = Canvas()
-        next_peak_height = int(math.ceil((float(memory_info['percentage'])/100)*self.CHART_HEIGHT))
-        self.memory_chart.value = self.draw_chart(memory_canvas,next_peak_height,'memory')
-        self.memory_chart.display()
+            ### memory_usage chart
+            memory_canvas = Canvas()
+            next_peak_height = int(math.ceil((float(memory_info['percentage'])/100)*self.CHART_HEIGHT))
+            self.memory_chart.value = self.draw_chart(memory_canvas,next_peak_height,'memory')
+            self.memory_chart.display()
 
-        ### processes_table
-        processes_table = self.statistics['Process']['table']
-        for proc in processes_table:
-            if proc['user'] == system_info['user']:
-                self.processes_table.entry_widget.values.append("{0: <30} {1: >4}       {2: <10}        {3: <4} %         {4: <4} % \
-                ".format( (proc['name'][:25] + '...') if len(proc['name']) > 25 else proc['name'],
-                           proc['id'],
-                           proc['user'],
-                           proc['cpu'],
-                           proc['memory'])
-                )
+            ### processes_table
+            processes_table = self.statistics['Process']['table']
+            for proc in processes_table:
+                if proc['user'] == system_info['user']:
+                    self.processes_table.entry_widget.values.append("{0: <30} {1: >4}       {2: <10}        {3: <4} %         {4: <4} % \
+                    ".format( (proc['name'][:25] + '...') if len(proc['name']) > 25 else proc['name'],
+                               proc['id'],
+                               proc['user'],
+                               proc['cpu'],
+                               proc['memory'])
+                    )
 
-        self.processes_table.display()
+            self.processes_table.display()
+
+        # catch the fucking KeyError caused to cumbersome point of reading the stats data structures
+        except KeyError:
+            pass
 
     def main(self):
         npyscreen.setTheme(npyscreen.Themes.TransparentThemeDarkText)
