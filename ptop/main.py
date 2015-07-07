@@ -15,7 +15,7 @@ def main():
                             dest='theme',
                             action='store',
                             type=str,
-                            required=True,
+                            required=False,
                             help=
                             '''
                                 Valid themes are :
@@ -31,7 +31,10 @@ def main():
                             version='ptop {}'.format(__version__))
 
         results = parser.parse_args()
-
+        if results.theme:
+            theme = results.theme
+        else:
+            theme = 'dark'
         # app wide global stop flag
         global_stop_event = threading.Event()
 
@@ -39,7 +42,7 @@ def main():
         # internally uses a thread Job 
         s.generate()
         logger.info('Statistics generating started')
-        app = PtopGUI(s.statistics,global_stop_event,results.theme)
+        app = PtopGUI(s.statistics,global_stop_event,theme)
         # blocking call
         logger.info('Starting the GUI application')
         app.run()
