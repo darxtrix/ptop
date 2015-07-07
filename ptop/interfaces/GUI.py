@@ -69,18 +69,24 @@ class PtopGUI(npyscreen.NPSApp):
     '''
         GUI class for ptop
     '''
-    def __init__(self,statistics,stop_event):
+    def __init__(self,statistics,stop_event,arg):
         self.statistics = statistics
-        # main form
-        self.window = None 
+        self.arg = arg
+        # Global stop event
+        self.stop_event = stop_event
         # thread for updating
         self.update_thread = None
+
+        # main form
+        self.window = None 
+
         # widgets
         self.basic_stats = None
         self.memory_chart = None
         self.cpu_chart = None
         self.processes_table = None
         self.actions = None
+
         # internal data structures
         # c.set(89,31) -- here the corner point will be set
         # the upper bounds are the excluded points
@@ -88,10 +94,24 @@ class PtopGUI(npyscreen.NPSApp):
         self.CHART_LENGTH = 90
         self.cpu_array = [0]*self.CHART_LENGTH
         self.memory_array = [0]*self.CHART_LENGTH
-        # Global stop event
-        self.stop_event = stop_event
+
         # logger
         self.logger = logging.getLogger('ptop.GUI')
+
+    def get_theme(self):
+        '''
+            choose a theme from a given values of themes
+            :param arg: Theme to be selected corresponding to the arg
+        '''
+        self.themes = {
+            'elegant'      : npyscreen.Themes.ElegantTheme,
+            'colorful'     : npyscreen.Themes.ColorfulTheme,
+            'simple'       : npyscreen.Themes.DefaultTheme,
+            'dark'         : npyscreen.Themes.TransparentThemeDarkText,
+            'light'        : npyscreen.Themes.TransparentThemeLightText,
+            'blackonwhite' : npyscreen.Themes.BlackOnWhiteTheme
+        }
+        return self.themes[self.arg]
 
     def draw_chart(self,canvas,y,chart_type):
         '''
@@ -215,15 +235,14 @@ class PtopGUI(npyscreen.NPSApp):
             pass
 
     def main(self):
-        # npyscreen.setTheme(npyscreen.Themes.TransparentThemeDarkText)
-        npyscreen.setTheme(npyscreen.Themes.TransparentThemeDarkText)
+        npyscreen.setTheme(self.get_theme())
 
         # time(ms) to wait for user interactions
         self.keypress_timeout_default = 10
 
         # setting the main window form
         self.window = WindowForm(parentApp=self,
-                                 name="ptop")
+                                 name="ptop ( http://github.com/black-perl) ")
 
         self.logger.info(self.window.curses_pad.getmaxyx())
 
