@@ -1,8 +1,9 @@
 from setuptools import setup
+from ptop import __version__
 
 setup(
     name='ptop',
-    version='0.0.2',
+    version=__version__,
     description='A task manager written in Python',
     long_description=open('README.md').read(),
     keywords='top ptop task manager python',
@@ -10,8 +11,8 @@ setup(
     author_email='ankprashar@gmail.com',
     url='https://github.com/black-perl/ptop',
     license='MIT',
-    download_url= 'https://github.com/black-perl/ptop/tarball/0.0.2',
-    packages=['ptop', 'ptop.core', 'ptop.logs', 'ptop.plugins', 'ptop.interfaces','ptop.statistics','ptop.utils'],
+    download_url= 'https://github.com/black-perl/ptop/tarball/0.0.3',
+    packages=['ptop', 'ptop.core', 'ptop.plugins', 'ptop.interfaces','ptop.statistics','ptop.utils'],
     install_requires=[
         "npyscreen>=4.9.1",
         "psutil>=3.0.1",

@@ -47,7 +47,7 @@ $ ptop -h
 
 ## Known Issues
 
-- Sometimes garbage text appears on the screen, use `Ctrl` + `L` to clear.
+- Sometimes garbage text appears on the screen, press `Ctrl` + `L` to **clear**. (Anybody having idea about this ?)
 - Though ptop is responsive across various terminal sizes, but sometimes things may break.
 
 
@@ -56,7 +56,9 @@ $ ptop -h
 ```bash
 $ git clone https://github.com/black-perl/ptop
 $ cd ptop   
+$ python setup.py develop
 ```
+**Note :** ptop will create a log file called `.ptop.log` in the home directory of the user.
 
 
 ## Main modules :
