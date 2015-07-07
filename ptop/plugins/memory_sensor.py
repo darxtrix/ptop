@@ -27,7 +27,11 @@ class MemorySensor(Plugin):
         smem = psutil.swap_memory()
         self.currentValue['text']['swap_memory']['total'] = int(float(smem.total)/(1024*1024))
         self.currentValue['text']['swap_memory']['active'] = int(float(smem.used)/(1024*1024))
-        self.currentValue['text']['swap_memory']['percentage'] = int(float(smem.used)/smem.total)*100
+        
+        if smem.total:
+            self.currentValue['text']['swap_memory']['percentage'] = int(float(smem.used)/smem.total)*100
+        else:
+            self.currentValue['text']['swap_memory']['percentage'] = 0
 
 
 memory_sensor = MemorySensor(name='Memory',sensorType='chart',interval=0.5)
