@@ -13,6 +13,12 @@ $ pip install ptop
 ```
 **Note:** Python 2.X supported yet, no support for python3.
 
+If **Python3** is your system default:
+
+```bash
+pip2.7 install ptop
+```
+
 ##Usage
 
 ```
