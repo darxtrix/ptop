@@ -11,7 +11,7 @@ An awesome task manager written in python. A more awesome top like thing in your
 ```bash
 $ pip install ptop
 ```
-
+**Note:** Python 2.X supported yet, no support for python3.
 
 ##Usage
 
