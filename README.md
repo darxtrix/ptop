@@ -28,6 +28,12 @@ $ ptop -t <theme>
 - `dark`   
 - `light` etc.
 
+## Changelog
+
+- version 0.0.6 fixes index errors.[Issue4](https://github.com/black-perl/ptop/issues/4)
+- A default theme option has been set.[Issue5](https://github.com/black-perl/ptop/issues/5)
+- Though there are some [known issues](https://github.com/black-perl/ptop#known-issues) still left. :cold_sweat:
+
 
 ## Some Screenshots
 
