@@ -22,10 +22,10 @@ $ ptop -t <theme>
 
 ## Supported themes
 
-- `colorful`     
-- `elegant`    
-- `simple`    
-- `dark`   
+- `colorful`
+- `elegant`
+- `simple`
+- `dark`
 - `light` etc.
 
 ## Changelog
@@ -59,11 +59,19 @@ $ ptop -h
 
 ## Development
 
+### Installing
 ```bash
 $ git clone https://github.com/black-perl/ptop
-$ cd ptop   
 $ python setup.py develop
 ```
+
+### Running
+
+```bash
+$ cd ptop/
+$ python main.py
+```
+
 **Note :** ptop will create a log file called `.ptop.log` in the home directory of the user.
 
 
@@ -86,8 +94,6 @@ $ python setup.py develop
 Pull requests are awesome and always welcome. Please use the **issue tracker** to report any bugs or file feature requests.
 
 
-## License 
+## License
 
 MIT (C) [Ankush Sharma](http://github.com/black-perl)
-
-
