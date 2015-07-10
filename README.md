@@ -89,11 +89,12 @@ $ python setup.py develop
 
 ## Contributions
 
-Pull requests are awesome and always welcome. Please use the **issue tracker** to report any bugs or file feature requests.
+- Pull requests are awesome and always welcome. Please use the [issue tracker](https://github.com/black-perl/ptop/issues) to report any bugs or file feature requests.
+- I really want to move the project forward to the next stable release but I am kind of busy nowadays, so not able to catch up on things quickly. So, contributions are required and moreover if someone wants to be a core contributor, let's have a quick chat on things. Yeah, send me an email. :smiley:
 
 
 ## License 
 
-MIT (C) [Ankush Sharma](http://github.com/black-perl)
+MIT © [Ankush Sharma](http://github.com/black-perl)
 
 
