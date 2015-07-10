@@ -74,10 +74,10 @@ $ python setup.py develop
 
 
 ## Main modules :
-- `ptop.core` : Defines a basic `Plugin` class that other plugins in the `ptop.plugins` in inherit.
+- `ptop.core` : Defines a basic `Plugin` class that other plugins in the `ptop.plugins` inherit.
 - `ptop.interfaces` : The interface to the ptop built using npyscreen.
 - `ptop.plugins` : This module contains all the plugin sensors supported i.e `Disk Sensor`,`Memory Sensor`,`Process Sensor`, etc. ( Any new plugin should be added here).
-- `ptop.statistics` : Generate continuous statistics using background thread jobs by location plugins in the plugins directory.
+- `ptop.statistics` : Generate continuous statistics using background thread jobs by locating plugins in the plugins directory.
 - `ptop.utils` : Custom thread classes.
 
 
