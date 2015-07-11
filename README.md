@@ -6,6 +6,9 @@ An awesome task manager written in python. A more awesome top like thing in your
 ![ptop-image](https://github.com/black-perl/ptop/blob/master/docs/ptop.gif)
 
 
+> Inspired by [vtop](https://github.com/MrRio/vtop)
+
+
 ##Installing
 
 ```bash
