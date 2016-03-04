@@ -2,7 +2,7 @@
 '''
     ptop(http://github.com/black-perl)
 
-    Author : Ankush Sharma (http://black-perl.me)
+    Author : Ankush Sharma (http://black-perl.in)
     Licence : MIT © 2015
 '''
 import sys,os
