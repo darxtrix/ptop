@@ -211,7 +211,7 @@ class PtopGUI(npyscreen.NPSApp):
             if MEMORY_SORT:
                 sorted_table = sorted(processes_table,key=lambda k:k['memory'],reverse=True)
             elif TIME_SORT:
-                sorted_table = sorted(processes_table,key=lambda k:k['time'],reverse=True)
+                sorted_table = sorted(processes_table,key=lambda k:k['rawtime'],reverse=True)
             else:
                 sorted_table = processes_table
 
@@ -219,7 +219,7 @@ class PtopGUI(npyscreen.NPSApp):
             temp_list = []
             for proc in sorted_table:
                 if proc['user'] == system_info['user']:
-                    temp_list.append("{0: <30} {1: >5}{5}{2: <10}{5}{3: <8}{5}{4: <4} % \
+                    temp_list.append("{0: <30} {1: >5}{5}{2: <10}{5}{3}{5}{4: >6.2f} % \
                     ".format( (proc['name'][:25] + '...') if len(proc['name']) > 25 else proc['name'],
                                proc['id'],
                                proc['user'],
