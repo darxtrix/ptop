@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 '''
-    ptop(http://github.com/black-perl)
+    ptop(http://github.com/darxtrix)
 
-    Author : Ankush Sharma (http://black-perl.me)
+    Author : Ankush Sharma (http://darxtrix.in)
     Licence : MIT © 2015
 '''
 import sys,os

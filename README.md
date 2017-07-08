@@ -3,7 +3,7 @@
 An awesome task manager written in python. A more awesome top like thing in your terminal !
 
 
-![ptop-image](https://github.com/black-perl/ptop/blob/master/docs/ptop.gif)
+![ptop-image](https://github.com/darxtrix/ptop/blob/master/docs/ptop.gif)
 
 
 > Inspired by [vtop](https://github.com/MrRio/vtop)
@@ -39,18 +39,18 @@ $ ptop -t <theme>
 
 ## Changelog
 
-- version 0.0.6 fixes index errors.[Issue4](https://github.com/black-perl/ptop/issues/4)
-- A default theme option has been set.[Issue5](https://github.com/black-perl/ptop/issues/5)
-- Though there are some [known issues](https://github.com/black-perl/ptop#known-issues) still left. :cold_sweat:
+- version 0.0.6 fixes index errors.[Issue4](https://github.com/darxtrix/ptop/issues/4)
+- A default theme option has been set.[Issue5](https://github.com/darxtrix/ptop/issues/5)
+- Though there are some [known issues](https://github.com/darxtrix/ptop#known-issues) still left. :cold_sweat:
 
 
 ## Some Screenshots
 
-![ptop-1](https://github.com/black-perl/ptop/blob/master/docs/ptop1.png)
+![ptop-1](https://github.com/darxtrix/ptop/blob/master/docs/ptop1.png)
 
-![ptop-2](https://github.com/black-perl/ptop/blob/master/docs/ptop.png)
+![ptop-2](https://github.com/darxtrix/ptop/blob/master/docs/ptop.png)
 
-![ptop-3](https://github.com/black-perl/ptop/blob/master/docs/ptop2.png)
+![ptop-3](https://github.com/darxtrix/ptop/blob/master/docs/ptop2.png)
 
 
 ##Help
@@ -69,7 +69,7 @@ $ ptop -h
 ## Development
 
 ```bash
-$ git clone https://github.com/black-perl/ptop
+$ git clone https://github.com/darxtrix/ptop
 $ cd ptop   
 $ python setup.py develop
 ```
@@ -92,12 +92,12 @@ $ python setup.py develop
 
 ## Contributions
 
-- Pull requests are awesome and always welcome. Please use the [issue tracker](https://github.com/black-perl/ptop/issues) to report any bugs or file feature requests.
+- Pull requests are awesome and always welcome. Please use the [issue tracker](https://github.com/darxtrix/ptop/issues) to report any bugs or file feature requests.
 - I really want to move the project forward to the next stable release but I am kind of busy nowadays, so not able to catch up on things quickly. So, contributions are required and moreover if someone wants to be a core contributor, let's have a quick chat on things. Yeah, send me an email. :smiley:
 
 
 ## License 
 
-MIT © [Ankush Sharma](http://github.com/black-perl)
+MIT © [Ankush Sharma](http://github.com/darxtrix)
 
 

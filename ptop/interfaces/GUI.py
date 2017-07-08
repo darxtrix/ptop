@@ -243,7 +243,7 @@ class PtopGUI(npyscreen.NPSApp):
 
         # setting the main window form
         self.window = WindowForm(parentApp=self,
-                                 name="ptop ( http://github.com/black-perl/ptop) ")
+                                 name="ptop[http://darxtrix.in/ptop]")
 
         self.logger.info(self.window.curses_pad.getmaxyx())
 
