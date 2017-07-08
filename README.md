@@ -1,4 +1,4 @@
-#ptop
+# ptop
 
 An awesome task manager written in python. A more awesome top like thing in your terminal !
 
@@ -9,7 +9,7 @@ An awesome task manager written in python. A more awesome top like thing in your
 > Inspired by [vtop](https://github.com/MrRio/vtop)
 
 
-##Installing
+## Installing
 
 ```bash
 $ pip install ptop
@@ -22,7 +22,7 @@ If **Python3** is your system default:
 pip2.7 install ptop
 ```
 
-##Usage
+## Usage
 
 ```
 $ ptop -t <theme>
@@ -53,7 +53,7 @@ $ ptop -t <theme>
 ![ptop-3](https://github.com/darxtrix/ptop/blob/master/docs/ptop2.png)
 
 
-##Help
+## Help
 
 ```bash
 $ ptop -h
