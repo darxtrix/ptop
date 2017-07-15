@@ -3,9 +3,11 @@
 
     Generates the running processes information
 '''
+import psutil, getpass
+import datetime, time, logging
 from ptop.core import Plugin
-import psutil
-import datetime, time
+from ptop.constants import PRIVELAGED_USERS
+
 
 class ProcessSensor(Plugin):
     def __init__(self,**kwargs):
@@ -15,6 +17,8 @@ class ProcessSensor(Plugin):
         self.currentValue['text'] = { 'running_processes' : 0,'running_threads' : 0}
         # nested structure is used for keeping the info of processes
         self.currentValue['table'] = []
+        self._currentSystemUser = getpass.getuser()
+        self._logger = logging.getLogger(__name__)
 
     def format_time(self, d):
         ret = '{0} day{1} '.format(d.days, ' s'[d.days > 1]) if d.days else ''
@@ -35,20 +39,39 @@ class ProcessSensor(Plugin):
             proc_info = {}
             proc_info['id'] = proc.pid
             proc_info['name'] = proc.name()
-            # getting more info about the process
+            '''
+             Getting more info about the processes
+             In case of MacOSx all of the processes that are returned by psutil.process_iter()
+             for all the users(root, adminstrator, normal user)
+             There should be a check for the current user is root or not 
+             because getting further process info for root processes as a normal 
+             user will give Permission Denied #10
+            '''
             p = psutil.Process(proc.pid)
             proc_info['user'] = p.username()
-            delta = datetime.timedelta(seconds=(time.time() - p.create_time()))
-            proc_info['rawtime'] = delta
-            proc_info['time'] =  self.format_time(delta)
-            proc_info['cpu'] = p.cpu_percent()
-            proc_info['memory'] = round(p.memory_percent(),2)
-            proc_info['command'] = ' '.join(p.cmdline())
-            # increamenting the thread_count and proc_count
-            thread_count += p.num_threads()
-            proc_count += 1
-            # recording the info
-            proc_info_list.append(proc_info)
+            try:
+                if proc_info['user'] == self._currentSystemUser or self._currentSystemUser in PRIVELAGED_USERS:
+                    delta = datetime.timedelta(seconds=(time.time() - p.create_time()))
+                    proc_info['rawtime'] = delta
+                    proc_info['time'] =  self.format_time(delta)
+                    proc_info['cpu'] = p.cpu_percent()
+                    proc_info['memory'] = round(p.memory_percent(),2)
+                    proc_info['command'] = ' '.join(p.cmdline())
+                    # increamenting the thread_count and proc_count
+                    thread_count += p.num_threads()
+                    proc_count += 1
+                    # recording the info
+                    proc_info_list.append(proc_info)
+            except:
+                '''
+                    In case ptop does not have privelages to access info for some of the processes
+                    just log them and don't show them in the processes table
+                '''
+                self._logger.info("Not able to get info for process {0} invoked by user {1}, ptop \
+                                   is invoked by the user {2}".format(p.username(),
+                                                                      str(p.pid),
+                                                                      self._currentSystemUser
+                                                                      ))
 
         # padding time
         time_len = max((len(proc['time']) for proc in proc_info_list))

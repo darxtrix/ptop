@@ -7,3 +7,7 @@ SUPPORTED_THEMES = [
     'blackonwhite'
 ]
 
+PRIVELAGED_USERS = [
+    'root',
+    'administrator'
+]
