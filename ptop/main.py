@@ -4,6 +4,7 @@ from ptop import __version__, _log_file
 from ptop.statistics import Statistics
 from ptop.interfaces import PtopGUI
 from ptop.plugins import SENSORS_LIST
+from ptop.constants import SUPPORTED_THEMES
 
 logger = logging.getLogger('ptop.main')
 
@@ -16,6 +17,7 @@ def main():
                             action='store',
                             type=str,
                             required=False,
+                            choices=SUPPORTED_THEMES,
                             help=
                             '''
                                 Valid themes are :
@@ -34,7 +36,7 @@ def main():
         if results.theme:
             theme = results.theme
         else:
-            theme = 'dark'
+            theme = 'elegant'
         # app wide global stop flag
         global_stop_event = threading.Event()
 
@@ -52,8 +54,10 @@ def main():
     except KeyboardInterrupt:
         global_stop_event.set()
         # clear log file
+        # Add code for wait for all the threads before join
         with open(_log_file,'w'):
             pass
+        # TODO :Wait for threads to exit before calling systemExist
         raise SystemExit
 
 
