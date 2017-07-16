@@ -3,7 +3,7 @@
 '''
 
 import npyscreen, math
-import psutil, logging
+import psutil, logging, weakref
 from drawille import Canvas
 from ptop.utils import ThreadJob
 from ptop.constants import SYSTEM_USERS
@@ -13,6 +13,34 @@ from ptop.constants import SYSTEM_USERS
 TIME_SORT = False
 MEMORY_SORT = False
 
+
+class ProcessFilterInputBox(npyscreen.Popup):
+    def create(self):
+        super(ProcessFilterInputBox, self).create()
+        self.filterbox = self.add(npyscreen.TitleText, name='Filter String:', )
+        self.nextrely += 1
+        self.statusline = self.add(npyscreen.Textfield, color = 'LABEL', editable = False)
+    
+    def updatestatusline(self):
+        '''
+            This method is called on any text change in filter box
+        '''
+        self.owner_widget._filter = self.filterbox.value
+        total_matches = self.owner_widget.filter_processes()
+        if self.filterbox.value == None or self.filterbox.value == '':
+            self.statusline.value = ''
+        elif total_matches == 0: 
+            self.statusline.value = '(No Matches)'
+        elif total_matches == 1:
+            self.statusline.value = '(1 Match)'
+        else:
+            self.statusline.value = '(%s Matches)' % total_matches
+    
+    def adjust_widgets(self):
+        self.updatestatusline()
+        self.statusline.display()
+
+
 class CustomMultiLineAction(npyscreen.MultiLineAction):
     '''
         Making custom MultiLineAction by adding the handlers
@@ -21,23 +49,60 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         super(CustomMultiLineAction,self).__init__(*args,**kwargs)
         self.add_handlers({
             "^N": self.sort_by_memory,
-            "^H": self.sort_by_time,
+            "^T": self.sort_by_time,
             "^K": self.kill_process,
-            "^Q" : self.quit
+            "^Q" : self.quit,
+            "^R" : self.reset,
+            "^F" : self.do_process_filtering_work
         })
-
+        self._filtering_flag = False
         self._logger = logging.getLogger(__name__)
+        self._unfiltered_values = None
+
+    def is_filtering_on(self):
+        return self._filtering_flag
+
+    def set_unfiltered_values(self, processes_info):
+        self._unfiltered_values = processes_info
 
     def sort_by_time(self,*args,**kwargs):
         # fuck .. that's why NPSManaged was required, i.e you can access the app instance within widgets
+        self._logger.info("Sorting the process table by time")
         global TIME_SORT,MEMORY_SORT
         MEMORY_SORT = False
         TIME_SORT = True
 
     def sort_by_memory(self,*args,**kwargs):
+        self._logger.info("Sorting the process table by memory")
         global TIME_SORT,MEMORY_SORT
         TIME_SORT = False
         MEMORY_SORT = True
+
+    def reset(self,*args,**kwargs):
+        self._logger.info("Resetting the process table")
+        global TIME_SORT, MEMORY_SORT
+        TIME_SORT = False
+        MEMORY_SORT = False
+        self._filtering_flag = False
+
+    def do_process_filtering_work(self,*args,**kwargs):
+        process_filtering_helper = ProcessFilterInputBox()
+        process_filtering_helper.owner_widget = weakref.proxy(self)
+        process_filtering_helper.display()
+        process_filtering_helper.edit()
+
+    def filter_processes(self):
+        self._logger.info("Filtering processes on the basis of filter : {0}".format(self._filter))
+        match_count = 0
+        filtered_processes = []
+        self._filtering_flag = True
+        for val in self._unfiltered_values:
+            if self._filter in str.lower(val):
+                match_count += 1
+                filtered_processes.append(val)
+        self.values = filtered_processes
+        return match_count
+
 
     def kill_process(self,*args,**kwargs):
         # Get the PID of the selected process
@@ -242,10 +307,13 @@ class PtopGUI(npyscreen.NPSApp):
             # check sorting flags
             if MEMORY_SORT:
                 sorted_table = sorted(processes_table,key=lambda k:k['memory'],reverse=True)
+                self._logger.info("Memory sorting done for process table")
             elif TIME_SORT:
                 sorted_table = sorted(processes_table,key=lambda k:k['rawtime'],reverse=True)
+                self._logger.info("Time sorting done for process table")
             else:
                 sorted_table = processes_table
+                self._logger.info("Resetting the sorting behavior")
 
             # to keep things pre computed
             temp_list = []
@@ -258,7 +326,9 @@ class PtopGUI(npyscreen.NPSApp):
                            proc['memory'],
                            " "*int(5*self.X_SCALING_FACTOR))
                 )
-            self.processes_table.entry_widget.values = temp_list
+            if not self.processes_table.entry_widget.is_filtering_on():
+                self.processes_table.entry_widget.values = temp_list
+            self.processes_table.entry_widget.set_unfiltered_values(temp_list)
             self.processes_table.entry_widget.update(clear=True)
 
             ''' This will update all the lazy updates at once, instead of .display() [fast]
@@ -389,7 +459,7 @@ class PtopGUI(npyscreen.NPSApp):
         self._logger.info("Actions box drawn, x1 {0} y1 {1}".format(ACTIONS_WIDGET_REL_X,  
                                                                     ACTIONS_WIDGET_REL_Y)
                                                                     )
-        self.actions.value = "^K : Kill     ^N : Sort by Memory     ^H : Sort by Time      g : top    ^Q : quit      l : search"
+        self.actions.value = "^K:Kill\t\t^N:Memory Sort\t\t^T:Time Sort\t\t^R:Reset\t\tg:Top\t\t^Q:Quit\t\tl:Filter"
         self.actions.display()
         self.actions.editable = False
 

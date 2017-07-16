@@ -56,7 +56,7 @@ class ProcessSensor(Plugin):
                 if ((proc_info['user'] == self._currentSystemUser) or (self._currentSystemUser in PRIVELAGED_USERS)) \
                         and p.status() not in INVALID_PROCESSES:
                     delta = datetime.timedelta(seconds=(time.time() - p.create_time()))
-                    proc_info['rawtime'] = delta
+                    proc_info['rawtime'] = time.time() - p.create_time()
                     proc_info['time'] =  self.format_time(delta)
                     proc_info['command'] = ' '.join(p.cmdline())
                     # incrementing the thread_count and proc_count
