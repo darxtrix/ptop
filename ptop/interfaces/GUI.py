@@ -24,6 +24,8 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
             "q" : self.quit
         })
 
+        self._logger = logging.getLogger(__name__)
+
     def sort_by_time(self,*args,**kwargs):
         # fuck .. that's why NPSManaged was required, i.e you can access the app instance within widgets
         global TIME_SORT,MEMORY_SORT
@@ -37,8 +39,15 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
 
     def kill_process(self,*args,**kwargs):
         pid = self.values[self.cursor_line].split()[1]
+        self._logger.info("Terminating process with pid {0}".format(pid))
         target = psutil.Process(int(pid))
-        target.terminate()
+        try:
+            target.terminate()
+            self._logger.info("Terminated process with pid {0}".format(pid))
+        except:
+            self._logger.info("Not able to terminate process with pid: {0}".format(pid),
+                              exc_info=True)
+
 
     def quit(self,*args,**kwargs):
         raise KeyboardInterrupt
@@ -80,6 +89,8 @@ class PtopGUI(npyscreen.NPSApp):
         self.stop_event = stop_event
         # thread for updating
         self.update_thread = None
+        # Flag to check if user is interacting
+        self.is_user_interacting = False
 
         # main form
         self.window = None 
@@ -95,12 +106,12 @@ class PtopGUI(npyscreen.NPSApp):
         # c.set(89,31) -- here the corner point will be set
         # the upper bounds are the excluded points
         self.CHART_HEIGHT = 32
-        self.CHART_LENGTH = 90
+        self.CHART_WIDTH = 90
         self.cpu_array = None
         self.memory_array = None
 
         # logger
-        self.logger = logging.getLogger('ptop.GUI')
+        self._logger = logging.getLogger(__name__)
 
     def get_theme(self):
         '''
@@ -128,21 +139,18 @@ class PtopGUI(npyscreen.NPSApp):
         else:
             chart_array = self.memory_array
         
-        for i in range(self.CHART_LENGTH):
+        for i in range(self.CHART_WIDTH):
             if i >= 2:
                 chart_array[i-2] = chart_array[i]
         # width of each peak is 2 units
-        chart_array[self.CHART_LENGTH-1] = y
-        chart_array[self.CHART_LENGTH-2] = y
+        chart_array[self.CHART_WIDTH-1] = y
+        chart_array[self.CHART_WIDTH-2] = y
 
-        # now draw on the canvas
-        for ctr in xrange(self.CHART_LENGTH):
-            end_point = self.CHART_HEIGHT-chart_array[ctr]
-            # end_point will be excluded
-            for i in xrange(self.CHART_HEIGHT,end_point,-1):
-                canvas.set(ctr,i)
+        for x in xrange(0,self.CHART_WIDTH):
+            for y in xrange(self.CHART_HEIGHT,self.CHART_HEIGHT-chart_array[x],-1):
+                canvas.set(x,y)
 
-        return canvas.frame(0,0,self.CHART_LENGTH,self.CHART_HEIGHT)
+        return canvas.frame(0,0,self.CHART_WIDTH,self.CHART_HEIGHT)
 
     def while_waiting(self):
         '''
@@ -152,17 +160,19 @@ class PtopGUI(npyscreen.NPSApp):
             t = ThreadJob(self.update,self.stop_event,1)
             self.update_thread = t
             self.update_thread.start()
-            self.logger.info('Started GUI update thread')
+            self._logger.info('Started GUI update thread')
 
     def update(self):
         '''
-            Update the form in background
+            Update the form in background, this is called inside the ThreadJob 
+            and will continue getting called once started
         '''
                 # get the information
         try:
             disk_info = self.statistics['Disk']['text']['/']
             swap_info = self.statistics['Memory']['text']['swap_memory']
             memory_info = self.statistics['Memory']['text']['memory']
+            self._logger.info(memory_info)
             processes_info = self.statistics['Process']['text']
             system_info = self.statistics['System']['text']
             cpu_info = self.statistics['CPU']['graph']
@@ -233,7 +243,7 @@ class PtopGUI(npyscreen.NPSApp):
         # catch the fucking KeyError caused to c
         # cumbersome point of reading the stats data structures
         except KeyError:
-            pass
+            self._logger.info("Not able to read the stats",exc_info=True)
 
     def main(self):
         npyscreen.setTheme(self.get_theme())
@@ -245,69 +255,134 @@ class PtopGUI(npyscreen.NPSApp):
         self.window = WindowForm(parentApp=self,
                                  name="ptop[http://darxtrix.in/ptop]")
 
-        self.logger.info(self.window.curses_pad.getmaxyx())
+        self._logger.info("Detected terminal size to be {0}".format(self.window.curses_pad.getmaxyx()))
 
         max_y,max_x = self.window.curses_pad.getmaxyx()
 
+        # Minimum terminal size should be used for scaling
+        # $ tput cols & $ tput lines
         self.Y_SCALING_FACTOR = float(max_y)/27
         self.X_SCALING_FACTOR = float(max_x)/104
 
+        #####      Overview widget     #######
+
+        OVERVIEW_WIDGET_REL_X = 1
+        OVERVIEW_WIDGET_REL_Y = 1
+        OVERVIEW_WIDGET_HEIGHT = int(math.ceil(5*self.Y_SCALING_FACTOR))
+        OVERVIEW_WIDGET_WIDTH = int(100*self.X_SCALING_FACTOR)
         self.basic_stats = self.window.add(MultiLineWidget,
                                            name="Overview",
-                                           relx=1,
-                                           rely=1,
-                                           max_height=int(math.ceil(5*self.Y_SCALING_FACTOR)),
-                                           max_width=int(100*self.X_SCALING_FACTOR)
+                                           relx=OVERVIEW_WIDGET_REL_X,
+                                           rely=OVERVIEW_WIDGET_REL_Y,
+                                           max_height=OVERVIEW_WIDGET_HEIGHT,
+                                           max_width=OVERVIEW_WIDGET_WIDTH
                                            )
+        self._logger.info("Overview information box drawn, x1 {0} x2 {1} y1 {2} y2 {3}".format(OVERVIEW_WIDGET_REL_X,
+                                                                                               OVERVIEW_WIDGET_REL_X+OVERVIEW_WIDGET_WIDTH,
+                                                                                               OVERVIEW_WIDGET_REL_Y,
+                                                                                               OVERVIEW_WIDGET_REL_Y+OVERVIEW_WIDGET_HEIGHT)
+                                                                                               )
         self.basic_stats.value = ""
         self.basic_stats.entry_widget.editable = False
 
 
+        ######    Memory Usage widget  #########
+
+        MEMORY_USAGE_WIDGET_REL_X = 1
+        MEMORY_USAGE_WIDGET_REL_Y = int(math.ceil(5*self.Y_SCALING_FACTOR)+1)
+        MEMORY_USAGE_WIDGET_HEIGHT = int(10*self.Y_SCALING_FACTOR)
+        MEMORY_USAGE_WIDGET_WIDTH = int(50*self.X_SCALING_FACTOR)
         self.memory_chart = self.window.add(MultiLineWidget,
                                             name="Memory Usage",
-                                            relx=1,
-                                            rely=int(math.ceil(5*self.Y_SCALING_FACTOR)+1),
-                                            max_height=int(10*self.Y_SCALING_FACTOR),
-                                            max_width=int(50*self.X_SCALING_FACTOR)
+                                            relx=MEMORY_USAGE_WIDGET_REL_X,
+                                            rely=MEMORY_USAGE_WIDGET_REL_Y,
+                                            max_height=MEMORY_USAGE_WIDGET_HEIGHT,
+                                            max_width=MEMORY_USAGE_WIDGET_WIDTH
                                             )
+        self._logger.info("Memory Usage information box drawn, x1 {0} x2 {1} y1 {2} y2 {3}".format(MEMORY_USAGE_WIDGET_REL_X,
+                                                                                                   MEMORY_USAGE_WIDGET_REL_X+MEMORY_USAGE_WIDGET_WIDTH,
+                                                                                                   MEMORY_USAGE_WIDGET_REL_Y,
+                                                                                                   MEMORY_USAGE_WIDGET_REL_Y+MEMORY_USAGE_WIDGET_HEIGHT)
+                                                                                                   )
         self.memory_chart.value = ""
         self.memory_chart.entry_widget.editable = False
 
+
+        ######    CPU Usage widget  #########
+
+        CPU_USAGE_WIDGET_REL_X = int(52*self.X_SCALING_FACTOR)
+        CPU_USAGE_WIDGET_REL_Y = int(math.ceil(5*self.Y_SCALING_FACTOR)+1)
+        CPU_USAGE_WIDGET_HEIGHT = int(10*self.Y_SCALING_FACTOR)
+        CPU_USAGE_WIDGET_WIDTH = int(49*self.X_SCALING_FACTOR)
         self.cpu_chart = self.window.add(MultiLineWidget,
                                          name="CPU Usage",
-                                         relx=int(52*self.X_SCALING_FACTOR),
-                                         rely=int(math.ceil(5*self.Y_SCALING_FACTOR)+1),
-                                         max_height=int(10*self.Y_SCALING_FACTOR),
-                                         max_width=int(49*self.X_SCALING_FACTOR)
+                                         relx=CPU_USAGE_WIDGET_REL_X,
+                                         rely=CPU_USAGE_WIDGET_REL_Y,
+                                         max_height=CPU_USAGE_WIDGET_HEIGHT,
+                                         max_width=CPU_USAGE_WIDGET_WIDTH
                                          )
-        self.cpu_chart.value = ""
+        self._logger.info("CPU Usage information box drawn, x1 {0} x2 {1} y1 {2} y2 {3}".format(CPU_USAGE_WIDGET_REL_X,
+                                                                                                CPU_USAGE_WIDGET_REL_X+CPU_USAGE_WIDGET_WIDTH,
+                                                                                                CPU_USAGE_WIDGET_REL_Y,
+                                                                                                CPU_USAGE_WIDGET_REL_Y+CPU_USAGE_WIDGET_HEIGHT)
+                                                                                                )
+        self.cpu_chart.value = "" 
         self.cpu_chart.entry_widget.editable = False
 
+
+        ######    Processes Info widget  #########
+
+        PROCESSES_INFO_WIDGET_REL_X = 1
+        PROCESSES_INFO_WIDGET_REL_Y = int(16*self.Y_SCALING_FACTOR)
+        PROCESSES_INFO_WIDGET_HEIGHT = int(8*self.Y_SCALING_FACTOR)
+        PROCESSES_INFO_WIDGET_WIDTH = int(100*self.X_SCALING_FACTOR)
         self.processes_table = self.window.add(MultiLineActionWidget,
                                                name="Processes",
-                                               relx=1,
-                                               rely=int(16*self.Y_SCALING_FACTOR),
-                                               max_height=int(8*self.Y_SCALING_FACTOR),
-                                               max_width=int(100*self.X_SCALING_FACTOR)
+                                               relx=PROCESSES_INFO_WIDGET_REL_X,
+                                               rely=PROCESSES_INFO_WIDGET_REL_Y,
+                                               max_height=PROCESSES_INFO_WIDGET_HEIGHT,
+                                               max_width=PROCESSES_INFO_WIDGET_WIDTH
                                                )
-
+        self._logger.info("Processes information box drawn, x1 {0} x2 {1} y1 {2} y2 {3}".format(PROCESSES_INFO_WIDGET_REL_X,
+                                                                                                PROCESSES_INFO_WIDGET_REL_X+PROCESSES_INFO_WIDGET_WIDTH,
+                                                                                                PROCESSES_INFO_WIDGET_REL_Y,
+                                                                                                PROCESSES_INFO_WIDGET_REL_Y+PROCESSES_INFO_WIDGET_HEIGHT)
+                                                                                                )
         self.processes_table.entry_widget.values = []
         self.processes_table.entry_widget.scroll_exit = False
+        self.cpu_chart.entry_widget.editable = False
 
+
+        ######   Actions widget  #########
+
+        ACTIONS_WIDGET_REL_X = 1
+        ACTIONS_WIDGET_REL_Y = int(24*self.Y_SCALING_FACTOR)
         self.actions = self.window.add(npyscreen.FixedText,
-                                       relx=1,
-                                       rely=int(24*self.Y_SCALING_FACTOR)
+                                       relx=ACTIONS_WIDGET_REL_X,
+                                       rely=ACTIONS_WIDGET_REL_Y
                                        )
+        self._logger.info("Actions box drawn, x1 {0} y1 {1}".format(ACTIONS_WIDGET_REL_X,  
+                                                                    ACTIONS_WIDGET_REL_Y)
+                                                                    )
         self.actions.value = "^K : Kill     ^N : Sort by Memory     ^H : Sort by Time      g : top    q : quit "
         self.actions.display()
         self.actions.editable = False
 
-        self.CHART_LENGTH = int(self.CHART_LENGTH*self.X_SCALING_FACTOR)
-        self.CHART_HEIGHT = int(self.CHART_HEIGHT*self.Y_SCALING_FACTOR)
+        ######   CPU/Memory charts  #########
+
+        # self.CHART_WIDTH = int(self.CHART_WIDTH*self.X_SCALING_FACTOR)
+        # self.CHART_HEIGHT = int(self.CHART_HEIGHT*self.Y_SCALING_FACTOR)
+        self.CHART_HEIGHT = int(math.floor((CPU_USAGE_WIDGET_HEIGHT-2)*4))
+        self.CHART_WIDTH = int(math.floor((CPU_USAGE_WIDGET_WIDTH-2)*2))
+        # self.CHART_HEIGHT = max_y
+        # self.CHART_WIDTH = max_x
+        self._logger.info("Memory and CPU charts dimension, width {0} height {1}".format(self.CHART_WIDTH,
+                                                                                         self.CHART_HEIGHT)
+                                                                                         )
 
         # fix for index error
-        self.cpu_array = [0]*self.CHART_LENGTH
-        self.memory_array = [0]*self.CHART_LENGTH
+        self.cpu_array = [0]*self.CHART_WIDTH
+        self.memory_array = [0]*self.CHART_WIDTH
 
         # add subwidgets to the parent widget
         self.window.edit()
