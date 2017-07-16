@@ -3,9 +3,11 @@
 '''
 
 import npyscreen, math
-import psutil, logging, getpass
+import psutil, logging
 from drawille import Canvas
 from ptop.utils import ThreadJob
+from ptop.constants import SYSTEM_USERS
+
 
 # global flags defining actions, would like them to be object vars
 TIME_SORT = False
@@ -21,7 +23,7 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
             "^N": self.sort_by_memory,
             "^H": self.sort_by_time,
             "^K": self.kill_process,
-            "q" : self.quit
+            "^Q" : self.quit
         })
 
         self._logger = logging.getLogger(__name__)
@@ -40,10 +42,9 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
     def kill_process(self,*args,**kwargs):
         # Get the PID of the selected process
         previous_parsed_text = ""
-        current_user = getpass.getuser()
         pid_to_kill = None
         for _ in self.values[self.cursor_line].split():
-            if _ == current_user:
+            if _ in SYSTEM_USERS:
                 pid_to_kill = int(previous_parsed_text)
                 break
             else:
@@ -249,15 +250,14 @@ class PtopGUI(npyscreen.NPSApp):
             # to keep things pre computed
             temp_list = []
             for proc in sorted_table:
-                if proc['user'] == system_info['user']:
-                    temp_list.append("{0: <30} {1: >5}{5}{2: <10}{5}{3}{5}{4: >6.2f} % \
-                    ".format( (proc['name'][:25] + '...') if len(proc['name']) > 25 else proc['name'],
-                               proc['id'],
-                               proc['user'],
-                               proc['time'],
-                               proc['memory'],
-                               " "*int(5*self.X_SCALING_FACTOR))
-                    )
+                temp_list.append("{0: <30} {1: >5}{5}{2: <10}{5}{3}{5}{4: >6.2f} % \
+                ".format( (proc['name'][:25] + '...') if len(proc['name']) > 25 else proc['name'],
+                           proc['id'],
+                           proc['user'],
+                           proc['time'],
+                           proc['memory'],
+                           " "*int(5*self.X_SCALING_FACTOR))
+                )
             self.processes_table.entry_widget.values = temp_list
             self.processes_table.entry_widget.update(clear=True)
 
@@ -380,7 +380,7 @@ class PtopGUI(npyscreen.NPSApp):
 
         ######   Actions widget  #########
 
-        ACTIONS_WIDGET_REL_X = 1
+        ACTIONS_WIDGET_REL_X = 2
         ACTIONS_WIDGET_REL_Y = int(24*self.Y_SCALING_FACTOR)
         self.actions = self.window.add(npyscreen.FixedText,
                                        relx=ACTIONS_WIDGET_REL_X,
@@ -389,7 +389,7 @@ class PtopGUI(npyscreen.NPSApp):
         self._logger.info("Actions box drawn, x1 {0} y1 {1}".format(ACTIONS_WIDGET_REL_X,  
                                                                     ACTIONS_WIDGET_REL_Y)
                                                                     )
-        self.actions.value = "^K : Kill     ^N : Sort by Memory     ^H : Sort by Time      g : top    q : quit "
+        self.actions.value = "^K : Kill     ^N : Sort by Memory     ^H : Sort by Time      g : top    ^Q : quit      l : search"
         self.actions.display()
         self.actions.editable = False
 

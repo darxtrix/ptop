@@ -6,7 +6,10 @@
 import psutil, getpass
 import datetime, time, logging
 from ptop.core import Plugin
-from ptop.constants import PRIVELAGED_USERS
+from ptop.constants import (PRIVELAGED_USERS, 
+                            INVALID_PROCESSES,
+                            SYSTEM_USERS
+                            )
 
 
 class ProcessSensor(Plugin):
@@ -50,28 +53,34 @@ class ProcessSensor(Plugin):
             p = psutil.Process(proc.pid)
             proc_info['user'] = p.username()
             try:
-                if proc_info['user'] == self._currentSystemUser or self._currentSystemUser in PRIVELAGED_USERS:
+                if ((proc_info['user'] == self._currentSystemUser) or (self._currentSystemUser in PRIVELAGED_USERS)) \
+                        and p.status() not in INVALID_PROCESSES:
                     delta = datetime.timedelta(seconds=(time.time() - p.create_time()))
                     proc_info['rawtime'] = delta
                     proc_info['time'] =  self.format_time(delta)
+                    proc_info['command'] = ' '.join(p.cmdline())
+                    # incrementing the thread_count and proc_count
+                    thread_count += p.num_threads()
                     proc_info['cpu'] = p.cpu_percent()
                     proc_info['memory'] = round(p.memory_percent(),2)
-                    proc_info['command'] = ' '.join(p.cmdline())
-                    # increamenting the thread_count and proc_count
-                    thread_count += p.num_threads()
                     proc_count += 1
                     # recording the info
                     proc_info_list.append(proc_info)
+                    # Aggregate all the system users
+                    if proc_info['user'] not in SYSTEM_USERS:
+                        SYSTEM_USERS.append(proc_info['user'])
             except:
                 '''
                     In case ptop does not have privelages to access info for some of the processes
                     just log them and don't show them in the processes table
                 '''
-                self._logger.info("Not able to get info for process {0} invoked by user {1}, ptop \
-                                   is invoked by the user {2}".format(p.username(),
-                                                                      str(p.pid),
-                                                                      self._currentSystemUser
-                                                                      ))
+                self._logger.info('''Not able to get info for process {0} with status {1} invoked by user {2}, ptop
+                                   is invoked by the user {3}'''.format(str(p.pid),
+                                                                        p.status(),
+                                                                        p.username(),
+                                                                        self._currentSystemUser
+                                                                        ),
+                                                                        exc_info=True)
 
         # padding time
         time_len = max((len(proc['time']) for proc in proc_info_list))
@@ -85,6 +94,3 @@ class ProcessSensor(Plugin):
 
 # make the process sensor less frequent as it takes more time to fetch info
 process_sensor = ProcessSensor(name='Process',sensorType='table',interval=1)
-
-
-
