@@ -12,6 +12,7 @@ from ptop.constants import SYSTEM_USERS
 # global flags defining actions, would like them to be object vars
 TIME_SORT = False
 MEMORY_SORT = False
+PROCESS_RELEVANCE_SORT = True
 
 
 class ProcessFilterInputBox(npyscreen.Popup):
@@ -71,18 +72,21 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         global TIME_SORT,MEMORY_SORT
         MEMORY_SORT = False
         TIME_SORT = True
+        PROCESS_RELEVANCE_SORT = False
 
     def sort_by_memory(self,*args,**kwargs):
         self._logger.info("Sorting the process table by memory")
         global TIME_SORT,MEMORY_SORT
         TIME_SORT = False
         MEMORY_SORT = True
+        PROCESS_RELEVANCE_SORT = False
 
     def reset(self,*args,**kwargs):
         self._logger.info("Resetting the process table")
         global TIME_SORT, MEMORY_SORT
         TIME_SORT = False
         MEMORY_SORT = False
+        PROCESS_RELEVANCE_SORT = True
         self._filtering_flag = False
 
     def do_process_filtering_work(self,*args,**kwargs):
@@ -311,6 +315,9 @@ class PtopGUI(npyscreen.NPSApp):
             elif TIME_SORT:
                 sorted_table = sorted(processes_table,key=lambda k:k['rawtime'],reverse=True)
                 self._logger.info("Time sorting done for process table")
+            elif PROCESS_RELEVANCE_SORT:
+                sorted_table = sorted(processes_table,key=lambda k:k['rawtime'])
+                self._logger.info("Sorting on the base of relevance")
             else:
                 sorted_table = processes_table
                 self._logger.info("Resetting the sorting behavior")
