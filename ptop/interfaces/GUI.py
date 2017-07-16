@@ -3,7 +3,7 @@
 '''
 
 import npyscreen, math
-import psutil, logging
+import psutil, logging, getpass
 from drawille import Canvas
 from ptop.utils import ThreadJob
 
@@ -38,14 +38,23 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         MEMORY_SORT = True
 
     def kill_process(self,*args,**kwargs):
-        pid = self.values[self.cursor_line].split()[1]
-        self._logger.info("Terminating process with pid {0}".format(pid))
-        target = psutil.Process(int(pid))
+        # Get the PID of the selected process
+        previous_parsed_text = ""
+        current_user = getpass.getuser()
+        pid_to_kill = None
+        for _ in self.values[self.cursor_line].split():
+            if _ == current_user:
+                pid_to_kill = int(previous_parsed_text)
+                break
+            else:
+                previous_parsed_text = _
+        self._logger.info("Terminating process with pid {0}".format(pid_to_kill))
+        target = psutil.Process(int(pid_to_kill))
         try:
             target.terminate()
-            self._logger.info("Terminated process with pid {0}".format(pid))
+            self._logger.info("Terminated process with pid {0}".format(pid_to_kill))
         except:
-            self._logger.info("Not able to terminate process with pid: {0}".format(pid),
+            self._logger.info("Not able to terminate process with pid: {0}".format(pid_to_kill),
                               exc_info=True)
 
 
