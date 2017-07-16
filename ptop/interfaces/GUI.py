@@ -165,28 +165,35 @@ class PtopGUI(npyscreen.NPSApp):
         '''
             called periodically when user is not pressing any key
         '''
-        if not self.update_thread:
-            t = ThreadJob(self.update,self.stop_event,1)
-            self.update_thread = t
-            self.update_thread.start()
-            self._logger.info('Started GUI update thread')
+        # if not self.update_thread:
+        #     t = ThreadJob(self.update,self.stop_event,1)
+        #     self.update_thread = t
+        #     self.update_thread.start()
+        self._logger.info('Updating GUI due to no keyboard interrupt')
+        '''
+            Earlier a thread job was being used to update the GUI
+            in background but while_waiting is getting called after 10ms
+            (keypress_timeout_default) so no more thread job is required
+            Only issue is that when user is interacting constantly the GUI
+            won't update
+        '''
+        self.update()
 
     def update(self):
         '''
-            Update the form in background, this is called inside the ThreadJob 
-            and will continue getting called once started
+            Update the form in background, this used to be called inside the ThreadJob 
+            and but now is getting called automatically in while_waiting
         '''
-                # get the information
         try:
             disk_info = self.statistics['Disk']['text']['/']
             swap_info = self.statistics['Memory']['text']['swap_memory']
             memory_info = self.statistics['Memory']['text']['memory']
-            self._logger.info(memory_info)
             processes_info = self.statistics['Process']['text']
             system_info = self.statistics['System']['text']
             cpu_info = self.statistics['CPU']['graph']
 
-            # overview 
+            #### Overview information ####
+
             row1 = "Disk Usage (/) {4}{0: <6}/{1: >6} MB{4}{2: >2} %{5}Processes{4}{3: <8}".format(disk_info["used"],
                                                                                                    disk_info["total"],
                                                                                                    disk_info["percentage"],
@@ -209,21 +216,26 @@ class PtopGUI(npyscreen.NPSApp):
                                                                                                    " "*int(9*self.X_SCALING_FACTOR))
 
             self.basic_stats.value = row1 + '\n' + row2 + '\n' + row3
-            self.basic_stats.display()
+            # Lazy update to GUI
+            self.basic_stats.update(clear=True)
 
-            ### cpu_usage chart
+
+            ####  CPU Usage information ####
+
             cpu_canvas = Canvas()
             next_peak_height = int(math.ceil((float(cpu_info['percentage'])/100)*self.CHART_HEIGHT))
             self.cpu_chart.value = (self.draw_chart(cpu_canvas,next_peak_height,'cpu'))
-            self.cpu_chart.display()
+            self.cpu_chart.update(clear=True)
 
-            ### memory_usage chart
+            #### Memory Usage information ####
+
             memory_canvas = Canvas()
             next_peak_height = int(math.ceil((float(memory_info['percentage'])/100)*self.CHART_HEIGHT))
             self.memory_chart.value = self.draw_chart(memory_canvas,next_peak_height,'memory')
-            self.memory_chart.display()
+            self.memory_chart.update(clear=True)
 
-            ### processes_table
+            #### Processes table ####
+
             processes_table = self.statistics['Process']['table']
 
             # check sorting flags
@@ -247,12 +259,16 @@ class PtopGUI(npyscreen.NPSApp):
                                " "*int(5*self.X_SCALING_FACTOR))
                     )
             self.processes_table.entry_widget.values = temp_list
-            self.processes_table.display()
+            self.processes_table.entry_widget.update(clear=True)
 
+            ''' This will update all the lazy updates at once, instead of .display() [fast]
+            .DISPLAY()[slow] is used to avoid glitches or gibberish text on the terminal
+            '''
+            self.window.DISPLAY()
         # catch the fucking KeyError caused to c
         # cumbersome point of reading the stats data structures
         except KeyError:
-            self._logger.info("Not able to read the stats",exc_info=True)
+            self._logger.info("Some of the stats reading failed",exc_info=True)
 
     def main(self):
         npyscreen.setTheme(self.get_theme())
@@ -395,5 +411,3 @@ class PtopGUI(npyscreen.NPSApp):
 
         # add subwidgets to the parent widget
         self.window.edit()
-
-
