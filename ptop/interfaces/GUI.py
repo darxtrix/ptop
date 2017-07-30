@@ -2,20 +2,36 @@
     Graphical User Interface for ptop
 '''
 
-import npyscreen, math
+import npyscreen, math, drawille
 import psutil, logging, weakref
-from drawille import Canvas
 from ptop.utils import ThreadJob
-from ptop.constants import SYSTEM_USERS
+from ptop.constants import SYSTEM_USERS, SUPPORTED_THEMES
 
 
 # global flags defining actions, would like them to be object vars
 TIME_SORT = False
 MEMORY_SORT = False
 PROCESS_RELEVANCE_SORT = True
+PREVIOUS_TERMINAL_WIDTH = None
+PREVIOUS_TERMINAL_HEIGHT = None
+
+class ProcessDetailsInfoBox(npyscreen.Popup):
+    def create(self,local_ports):
+        super(ProcessDetailsInfoBox,self).create()
+        self.details_box_heading = self.add(npyscreen.TitleText, name='Ports used by the process',)
+        self.details_box = self.add(npyscreen.BufferPager)
+        self.details_box.values.extend(local_ports)
+        self.details_box.display()
+
+    def adjust_widgets(self):
+        pass
 
 
 class ProcessFilterInputBox(npyscreen.Popup):
+    '''
+        Helper widget(input-box) that is used for filtering the processes list 
+        on the basis of entered filtering string in the widget
+    '''
     def create(self):
         super(ProcessFilterInputBox, self).create()
         self.filterbox = self.add(npyscreen.TitleText, name='Filter String:', )
@@ -24,7 +40,8 @@ class ProcessFilterInputBox(npyscreen.Popup):
     
     def updatestatusline(self):
         '''
-            This method is called on any text change in filter box
+            This updates the status line that displays how many processes in the 
+            processes list are matching to the filtering string
         '''
         self.owner_widget._filter = self.filterbox.value
         total_matches = self.owner_widget.filter_processes()
@@ -38,6 +55,9 @@ class ProcessFilterInputBox(npyscreen.Popup):
             self.statusline.value = '(%s Matches)' % total_matches
     
     def adjust_widgets(self):
+        '''
+            This method is called on any text change in filter box.
+        '''
         self.updatestatusline()
         self.statusline.display()
 
@@ -49,12 +69,13 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
     def __init__(self,*args,**kwargs):
         super(CustomMultiLineAction,self).__init__(*args,**kwargs)
         self.add_handlers({
-            "^N": self.sort_by_memory,
-            "^T": self.sort_by_time,
-            "^K": self.kill_process,
+            "^N" : self.sort_by_memory,
+            "^T" : self.sort_by_time,
+            "^K" : self.kill_process,
             "^Q" : self.quit,
             "^R" : self.reset,
-            "^F" : self.do_process_filtering_work
+            "^H" : self.do_process_filtering_work,
+            "^F" : self.show_detailed_process_info
         })
         self._filtering_flag = False
         self._logger = logging.getLogger(__name__)
@@ -90,12 +111,34 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         self._filtering_flag = False
 
     def do_process_filtering_work(self,*args,**kwargs):
-        process_filtering_helper = ProcessFilterInputBox()
-        process_filtering_helper.owner_widget = weakref.proxy(self)
-        process_filtering_helper.display()
-        process_filtering_helper.edit()
+        '''
+            Dynamically instantiate a process filtering box used
+            to offload the process filtering work
+        '''
+        self.process_filtering_helper = ProcessFilterInputBox()
+        self.process_filtering_helper.owner_widget = weakref.proxy(self)
+        self.process_filtering_helper.display()
+        self.process_filtering_helper.edit()
+
+    def show_detailed_process_info(self,*args,**kwargs):
+        """
+            Display the extra process information. Extra information includes
+            open ports and the opened files list
+        """
+        self._logger.info("Showing process details for the selected process")
+        self.process_details_view_helper = ProcessDetailsInfoBox()
+        self.process_details_view_helper.owner_widget = weakref.proxy(self)
+        self.process_details_view_helper.display()
+        self.process_details_view_helper.edit()
 
     def filter_processes(self):
+        '''
+            This method is used to filter the processes in the processes table on the 
+            basis of the filtering string entered in the filter box
+            When the user presses OK in the input box widget the value of the processes 
+            table is set to **filtered** processes 
+            It returns the count of the processes matched to the filtering string
+        '''
         self._logger.info("Filtering processes on the basis of filter : {0}".format(self._filter))
         match_count = 0
         filtered_processes = []
@@ -159,52 +202,55 @@ class WindowForm(npyscreen.FormBaseNew):
 
 class PtopGUI(npyscreen.NPSApp):
     '''
-        GUI class for ptop
+        GUI class for ptop. 
+        This controls the rendering of the main window and acts as the registering point
+        for all other widgets
     '''
     def __init__(self,statistics,stop_event,arg):
         self.statistics = statistics
+        # Command line arguments passed, currently used for selecting themes
         self.arg = arg
         # Global stop event
         self.stop_event = stop_event
         # thread for updating
         self.update_thread = None
-        # Flag to check if user is interacting
+        # Flag to check if user is interacting (not used)
         self.is_user_interacting = False
 
-        # main form
+        # Main form
         self.window = None 
 
-        # widgets
+        # Widgets
         self.basic_stats = None
         self.memory_chart = None
         self.cpu_chart = None
         self.processes_table = None
+
+        # Actions bar
         self.actions = None
 
-        # internal data structures
-        # c.set(89,31) -- here the corner point will be set
-        # the upper bounds are the excluded points
-        self.CHART_HEIGHT = 32
-        self.CHART_WIDTH = 90
+        '''
+            Refer the other comment in .draw() function, this is legacy behavior
+            # internal data structures
+            # c.set(89,31) -- here the corner point will be set
+            # the upper bounds are the excluded points
+            self.CHART_HEIGHT = 32
+            self.CHART_WIDTH = 90
+        '''
+        self.CHART_HEIGHT = None
+        self.CHART_WIDTH = None
         self.cpu_array = None
         self.memory_array = None
 
         # logger
         self._logger = logging.getLogger(__name__)
 
-    def get_theme(self):
+    def _get_theme(self):
         '''
             choose a theme from a given values of themes
             :param arg: Theme to be selected corresponding to the arg
         '''
-        self.themes = {
-            'elegant'      : npyscreen.Themes.ElegantTheme,
-            'colorful'     : npyscreen.Themes.ColorfulTheme,
-            'simple'       : npyscreen.Themes.DefaultTheme,
-            'dark'         : npyscreen.Themes.TransparentThemeDarkText,
-            'light'        : npyscreen.Themes.TransparentThemeLightText,
-            'blackonwhite' : npyscreen.Themes.BlackOnWhiteTheme
-        }
+        self.themes = SUPPORTED_THEMES
         return self.themes[self.arg]
 
     def draw_chart(self,canvas,y,chart_type):
@@ -247,7 +293,22 @@ class PtopGUI(npyscreen.NPSApp):
             Only issue is that when user is interacting constantly the GUI
             won't update
         '''
-        self.update()
+        terminal_width,terminal_height = drawille.getTerminalSize()
+        self._logger.info("Equating terminal sizes, old {0}*{1} vs {2}*{3}".format(PREVIOUS_TERMINAL_WIDTH,
+                                                                                   PREVIOUS_TERMINAL_HEIGHT,
+                                                                                   terminal_width,
+                                                                                   terminal_height
+                                                                                   ))
+
+        # In case the terminal size is changed, try resizing the terminal and redrawing ptop
+        if terminal_width != PREVIOUS_TERMINAL_WIDTH or terminal_height != PREVIOUS_TERMINAL_HEIGHT:
+            self._logger.info("Terminal Size changed, updating the GUI")
+            self.window.erase()
+            self.draw()
+            self.update()
+        # In case the terminal size is not changed, don't redraw the GUI, just update the contents
+        else:
+            self.update()
 
     def update(self):
         '''
@@ -292,14 +353,14 @@ class PtopGUI(npyscreen.NPSApp):
 
             ####  CPU Usage information ####
 
-            cpu_canvas = Canvas()
+            cpu_canvas = drawille.Canvas()
             next_peak_height = int(math.ceil((float(cpu_info['percentage'])/100)*self.CHART_HEIGHT))
             self.cpu_chart.value = (self.draw_chart(cpu_canvas,next_peak_height,'cpu'))
             self.cpu_chart.update(clear=True)
 
             #### Memory Usage information ####
 
-            memory_canvas = Canvas()
+            memory_canvas = drawille.Canvas()
             next_peak_height = int(math.ceil((float(memory_info['percentage'])/100)*self.CHART_HEIGHT))
             self.memory_chart.value = self.draw_chart(memory_canvas,next_peak_height,'memory')
             self.memory_chart.update(clear=True)
@@ -325,41 +386,42 @@ class PtopGUI(npyscreen.NPSApp):
             # to keep things pre computed
             temp_list = []
             for proc in sorted_table:
-                temp_list.append("{0: <30} {1: >5}{5}{2: <10}{5}{3}{5}{4: >6.2f} % \
+                temp_list.append("{0: <30} {1: >5}{6}{2: <10}{6}{3}{6}{4: >6.2f} % {6}{5}\
                 ".format( (proc['name'][:25] + '...') if len(proc['name']) > 25 else proc['name'],
                            proc['id'],
                            proc['user'],
                            proc['time'],
                            proc['memory'],
+                           proc['local_ports'],
                            " "*int(5*self.X_SCALING_FACTOR))
                 )
             if not self.processes_table.entry_widget.is_filtering_on():
-                self.processes_table.entry_widget.values = temp_list
+                self.processes_table.entry_widget.values =  temp_list
             self.processes_table.entry_widget.set_unfiltered_values(temp_list)
             self.processes_table.entry_widget.update(clear=True)
 
             ''' This will update all the lazy updates at once, instead of .display() [fast]
-            .DISPLAY()[slow] is used to avoid glitches or gibberish text on the terminal
+                .DISPLAY()[slow] is used to avoid glitches or gibberish text on the terminal
             '''
             self.window.DISPLAY()
+
         # catch the fucking KeyError caused to c
         # cumbersome point of reading the stats data structures
         except KeyError:
             self._logger.info("Some of the stats reading failed",exc_info=True)
 
-    def main(self):
-        npyscreen.setTheme(self.get_theme())
-
-        # time(ms) to wait for user interactions
-        self.keypress_timeout_default = 10
-
+    def draw(self):
         # setting the main window form
         self.window = WindowForm(parentApp=self,
-                                 name="ptop[http://darxtrix.in/ptop]")
+                                 name="ptop[http://darxtrix.in/ptop]"
+                                 )
 
         self._logger.info("Detected terminal size to be {0}".format(self.window.curses_pad.getmaxyx()))
 
         max_y,max_x = self.window.curses_pad.getmaxyx()
+        global PREVIOUS_TERMINAL_HEIGHT, PREVIOUS_TERMINAL_WIDTH
+        PREVIOUS_TERMINAL_HEIGHT = max_y
+        PREVIOUS_TERMINAL_WIDTH = max_x
 
         # Minimum terminal size should be used for scaling
         # $ tput cols & $ tput lines
@@ -466,18 +528,23 @@ class PtopGUI(npyscreen.NPSApp):
         self._logger.info("Actions box drawn, x1 {0} y1 {1}".format(ACTIONS_WIDGET_REL_X,  
                                                                     ACTIONS_WIDGET_REL_Y)
                                                                     )
-        self.actions.value = "^K:Kill\t\t^N:Memory Sort\t\t^T:Time Sort\t\t^R:Reset\t\tg:Top\t\t^Q:Quit\t\tl:Filter"
+        self.actions.value = "^K:Kill\t\t^N:Memory Sort\t\t^T:Time Sort\t\t^R:Reset\t\tg:Top\t\t^Q:Quit\t\t^F:Filter"
         self.actions.display()
         self.actions.editable = False
 
         ######   CPU/Memory charts  #########
 
-        # self.CHART_WIDTH = int(self.CHART_WIDTH*self.X_SCALING_FACTOR)
-        # self.CHART_HEIGHT = int(self.CHART_HEIGHT*self.Y_SCALING_FACTOR)
+        '''
+            Earlier static dimensions (32*90) were used after multiplication with the corresponding
+            scaling factors now the dimensions of the CPU_WIDGETS/MEMORY _WIDGETS are used for calculation
+            of the dimensions of the charts. There is padding of width 1 between the boundaries of the widgets 
+            and the charts
+
+            # self.CHART_WIDTH = int(self.CHART_WIDTH*self.X_SCALING_FACTOR)
+            # self.CHART_HEIGHT = int(self.CHART_HEIGHT*self.Y_SCALING_FACTOR)
+        '''
         self.CHART_HEIGHT = int(math.floor((CPU_USAGE_WIDGET_HEIGHT-2)*4))
         self.CHART_WIDTH = int(math.floor((CPU_USAGE_WIDGET_WIDTH-2)*2))
-        # self.CHART_HEIGHT = max_y
-        # self.CHART_WIDTH = max_x
         self._logger.info("Memory and CPU charts dimension, width {0} height {1}".format(self.CHART_WIDTH,
                                                                                          self.CHART_HEIGHT)
                                                                                          )
@@ -488,3 +555,10 @@ class PtopGUI(npyscreen.NPSApp):
 
         # add subwidgets to the parent widget
         self.window.edit()
+
+    def main(self):
+        npyscreen.setTheme(self._get_theme())
+
+        # time(ms) to wait for user interactions
+        self.keypress_timeout_default = 10
+        self.draw()

@@ -63,6 +63,10 @@ class ProcessSensor(Plugin):
                     thread_count += p.num_threads()
                     proc_info['cpu'] = p.cpu_percent()
                     proc_info['memory'] = round(p.memory_percent(),2)
+                    # Add information of the local ports used by the process
+                    proc_info['local_ports'] = [x.laddr[1] for x in p.connections()]
+                    # Add information of the open files by the process
+                    proc_info['open_files'] = p.open_files()
                     proc_count += 1
                     # recording the info
                     proc_info_list.append(proc_info)

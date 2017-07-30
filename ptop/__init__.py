@@ -22,7 +22,7 @@ logging.basicConfig(filename=_log_file,
                     filemode='a',
                     format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
                     datefmt='%H:%M:%S',
-                    level=logging.INFO)
+                    level=logging.DEBUG)
 
 logger = logging.getLogger('ptop_logger')
 

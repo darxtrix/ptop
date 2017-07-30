@@ -31,7 +31,6 @@ class Statistics:
         '''
         for sensor in self.plugins:
             # update the sensors value periodically
-            logger.info('Started thread job for the sensor {0}'.format(sensor))
             job = ThreadJob(sensor.update,self.stop_event,sensor.interval)
             job.start()
 

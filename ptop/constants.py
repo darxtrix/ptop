@@ -1,11 +1,14 @@
-SUPPORTED_THEMES = [
-    'elegant',
-    'colorful',
-    'dark',
-    'light',
-    'simple',
-    'blackonwhite'
-]
+import npyscreen
+
+
+SUPPORTED_THEMES = {
+    'elegant'      : npyscreen.Themes.ElegantTheme,
+    'colorful'     : npyscreen.Themes.ColorfulTheme,
+    'simple'       : npyscreen.Themes.DefaultTheme,
+    'dark'         : npyscreen.Themes.TransparentThemeDarkText,
+    'light'        : npyscreen.Themes.TransparentThemeLightText,
+    'blackonwhite' : npyscreen.Themes.BlackOnWhiteTheme
+}
 
 PRIVELAGED_USERS = [
     'root',
@@ -13,7 +16,7 @@ PRIVELAGED_USERS = [
 ]
 
 INVALID_PROCESSES = [
-    'zombie'
+'zombie'
 ]
 
 # This will be overriden by process sensor

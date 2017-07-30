@@ -17,7 +17,7 @@ def main():
                             action='store',
                             type=str,
                             required=False,
-                            choices=SUPPORTED_THEMES,
+                            choices=SUPPORTED_THEMES.keys(),
                             help=
                             '''
                                 Valid themes are :
