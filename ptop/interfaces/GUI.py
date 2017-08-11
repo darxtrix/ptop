@@ -367,26 +367,26 @@ class PtopGUI(npyscreen.NPSApp):
 
             #### Processes table ####
 
-            processes_table = self.statistics['Process']['table']
+            self._processes_data = self.statistics['Process']['table']
 
             # check sorting flags
             if MEMORY_SORT:
-                sorted_table = sorted(processes_table,key=lambda k:k['memory'],reverse=True)
+                sorted_processes_data = sorted(self._processes_data,key=lambda k:k['memory'],reverse=True)
                 self._logger.info("Memory sorting done for process table")
             elif TIME_SORT:
-                sorted_table = sorted(processes_table,key=lambda k:k['rawtime'],reverse=True)
+                sorted_processes_data = sorted(self._processes_data,key=lambda k:k['rawtime'],reverse=True)
                 self._logger.info("Time sorting done for process table")
             elif PROCESS_RELEVANCE_SORT:
-                sorted_table = sorted(processes_table,key=lambda k:k['rawtime'])
-                self._logger.info("Sorting on the base of relevance")
+                sorted_processes_data = sorted(self._processes_data,key=lambda k:k['rawtime'])
+                self._logger.info("Sorting on the basis of relevance")
             else:
-                sorted_table = processes_table
+                sorted_processes_data = self._processes_data
                 self._logger.info("Resetting the sorting behavior")
 
             # to keep things pre computed
-            temp_list = []
-            for proc in sorted_table:
-                temp_list.append("{0: <30} {1: >5}{6}{2: <10}{6}{3}{6}{4: >6.2f} % {6}{5}\
+            curtailed_processes_data = []
+            for proc in sorted_processes_data:
+                curtailed_processes_data.append("{0: <30} {1: >5}{6}{2: <10}{6}{3}{6}{4: >6.2f} % {6}{5}\
                 ".format( (proc['name'][:25] + '...') if len(proc['name']) > 25 else proc['name'],
                            proc['id'],
                            proc['user'],
@@ -396,8 +396,8 @@ class PtopGUI(npyscreen.NPSApp):
                            " "*int(5*self.X_SCALING_FACTOR))
                 )
             if not self.processes_table.entry_widget.is_filtering_on():
-                self.processes_table.entry_widget.values =  temp_list
-            self.processes_table.entry_widget.set_unfiltered_values(temp_list)
+                self.processes_table.entry_widget.values =  curtailed_processes_data
+            self.processes_table.entry_widget.set_unfiltered_values(curtailed_processes_data)
             self.processes_table.entry_widget.update(clear=True)
 
             ''' This will update all the lazy updates at once, instead of .display() [fast]
