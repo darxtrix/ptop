@@ -8,8 +8,9 @@ An awesome task manager written in python. A more awesome top like thing in your
 
 > Inspired by [vtop](https://github.com/MrRio/vtop)
 
-
 ## Installing
+
+*Note: `ptop` is in active development right now, `pip` registry has the outdated `ptop` version Consider [these](https://github.com/darxtrix/ptop#development) instructions if you want to use the updated and bug free`ptop`.*
 
 ```bash
 $ pip install ptop
@@ -37,10 +38,10 @@ $ ptop -t <theme>
 - `dark`   
 - `light` etc.
 
-## Changelog
+## Changelog [updated on 11 Aug 2017]
 
-- version 0.0.6 fixes index errors.[Issue4](https://github.com/darxtrix/ptop/issues/4)
-- A default theme option has been set.[Issue5](https://github.com/darxtrix/ptop/issues/5)
+- [Fixed] version 0.0.6 fixes index errors.[Issue4](https://github.com/darxtrix/ptop/issues/4)
+- [Fixed] A default theme option has been set.[Issue5](https://github.com/darxtrix/ptop/issues/5)
 - Though there are some [known issues](https://github.com/darxtrix/ptop#known-issues) still left. :cold_sweat:
 
 
