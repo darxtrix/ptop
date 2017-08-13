@@ -16,12 +16,37 @@ PREVIOUS_TERMINAL_WIDTH = None
 PREVIOUS_TERMINAL_HEIGHT = None
 
 class ProcessDetailsInfoBox(npyscreen.Popup):
-    def create(self,local_ports):
+    '''
+    This widget is used to who the detailed information about the selected process 
+    in the processes table. Curretly only the port information is shown for a selected
+    process.
+
+    Set them to fix the position
+    SHOW_ATX  = 10
+    SHOW_ATY  = 2
+    '''
+    def __init__(self,local_ports,process_pid):
+        self._local_ports = local_ports
+        self._process_pid = process_pid
+        super(ProcessDetailsInfoBox,self).__init__()
+
+    def create(self,**kwargs):
+        ''' 
+            Sub widgets [details_box_heading,details_box] are only shown in GUI if
+            they are created in the create() method
+        '''
         super(ProcessDetailsInfoBox,self).create()
-        self.details_box_heading = self.add(npyscreen.TitleText, name='Ports used by the process',)
-        self.details_box = self.add(npyscreen.BufferPager)
-        self.details_box.values.extend(local_ports)
-        self.details_box.display()
+        self._logger = logging.getLogger(__name__)
+        self._logger.info("Showing the local ports {0} used by the process with pid {1}".format(self._local_ports,
+                                                                                                str(self._process_pid))
+                                                                                                )
+        if len(self._local_ports) != 0:
+            self.details_box_heading = self.add(npyscreen.TitleText, name='Ports used by the process {0}'.format(str(self._process_pid)),)
+            self.details_box = self.add(npyscreen.BufferPager)
+            self.details_box.values.extend(self._local_ports)
+            self.details_box.display()
+        else:
+            self.details_box_heading = self.add(npyscreen.TitleText, name='No ports used by the process {0}'.format(str(self._process_pid)),)
 
     def adjust_widgets(self):
         pass
@@ -69,25 +94,48 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
     def __init__(self,*args,**kwargs):
         super(CustomMultiLineAction,self).__init__(*args,**kwargs)
         self.add_handlers({
-            "^N" : self.sort_by_memory,
-            "^T" : self.sort_by_time,
-            "^K" : self.kill_process,
-            "^Q" : self.quit,
-            "^R" : self.reset,
-            "^H" : self.do_process_filtering_work,
-            "^F" : self.show_detailed_process_info
+            "^N" : self._sort_by_memory,
+            "^T" : self._sort_by_time,
+            "^K" : self._kill_process,
+            "^Q" : self._quit,
+            "^R" : self._reset,
+            "^H" : self._do_process_filtering_work,
+            "^L" : self._show_detailed_process_info,
+            "^F" : self._do_process_filtering_work
         })
         self._filtering_flag = False
         self._logger = logging.getLogger(__name__)
-        self._unfiltered_values = None
+        '''
+            Non-sorted processes table entries, practically this will never be 
+            None beacuse the user will ask for a certain process info only 
+            after chossing one from the processes table
+        '''
+        self._uncurtailed_process_data = None
 
-    def is_filtering_on(self):
-        return self._filtering_flag
+    def _get_selected_process_pid(self):
+        '''
+            Parses the process pid from the selected line in the process
+            table
+        '''
+        previous_parsed_text = ""
+        for _ in self.values[self.cursor_line].split():
+            if _ in SYSTEM_USERS:
+                selected_process_pid = int(previous_parsed_text)
+                break
+            else:
+                previous_parsed_text = _
+        return selected_process_pid
 
-    def set_unfiltered_values(self, processes_info):
-        self._unfiltered_values = processes_info
+    def _get_local_ports_used_by_a_process(self,process_pid):
+        """
+            Given the process_id returns the list of local ports used by
+            the process
+        """
+        for proc in self._uncurtailed_process_data:
+            if proc['id'] == process_pid:
+                return proc['local_ports']
 
-    def sort_by_time(self,*args,**kwargs):
+    def _sort_by_time(self,*args,**kwargs):
         # fuck .. that's why NPSManaged was required, i.e you can access the app instance within widgets
         self._logger.info("Sorting the process table by time")
         global TIME_SORT,MEMORY_SORT
@@ -95,14 +143,14 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         TIME_SORT = True
         PROCESS_RELEVANCE_SORT = False
 
-    def sort_by_memory(self,*args,**kwargs):
+    def _sort_by_memory(self,*args,**kwargs):
         self._logger.info("Sorting the process table by memory")
         global TIME_SORT,MEMORY_SORT
         TIME_SORT = False
         MEMORY_SORT = True
         PROCESS_RELEVANCE_SORT = False
 
-    def reset(self,*args,**kwargs):
+    def _reset(self,*args,**kwargs):
         self._logger.info("Resetting the process table")
         global TIME_SORT, MEMORY_SORT
         TIME_SORT = False
@@ -110,7 +158,7 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         PROCESS_RELEVANCE_SORT = True
         self._filtering_flag = False
 
-    def do_process_filtering_work(self,*args,**kwargs):
+    def _do_process_filtering_work(self,*args,**kwargs):
         '''
             Dynamically instantiate a process filtering box used
             to offload the process filtering work
@@ -120,16 +168,36 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         self.process_filtering_helper.display()
         self.process_filtering_helper.edit()
 
-    def show_detailed_process_info(self,*args,**kwargs):
+    def _show_detailed_process_info(self,*args,**kwargs):
         """
             Display the extra process information. Extra information includes
             open ports and the opened files list
         """
         self._logger.info("Showing process details for the selected process")
-        self.process_details_view_helper = ProcessDetailsInfoBox()
+        # This is not working, local_ports information is not getting passed in the 
+        # create method of self._logger = logging.getLogger(__name__)
+        # self.process_details_view_helper = ProcessDetailsInfoBox(local_ports=['1','2','3'])
+        process_pid = self._get_selected_process_pid()
+        local_ports = self._get_local_ports_used_by_a_process(process_pid)
+        self.process_details_view_helper = ProcessDetailsInfoBox(local_ports,process_pid)
         self.process_details_view_helper.owner_widget = weakref.proxy(self)
         self.process_details_view_helper.display()
         self.process_details_view_helper.edit()
+
+    def _kill_process(self):
+        # Get the PID of the selected process
+        pid_to_kill = self._get_selected_process_pid()
+        self._logger.info("Terminating process with pid {0}".format(pid_to_kill))
+        target = psutil.Process(int(pid_to_kill))
+        try:
+            target.terminate()
+            self._logger.info("Terminated process with pid {0}".format(pid_to_kill))
+        except:
+            self._logger.info("Not able to terminate process with pid: {0}".format(pid_to_kill),
+                              exc_info=True)
+
+    def _quit(self,*args,**kwargs):
+        raise KeyboardInterrupt
 
     def filter_processes(self):
         '''
@@ -143,36 +211,18 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         match_count = 0
         filtered_processes = []
         self._filtering_flag = True
-        for val in self._unfiltered_values:
+        for val in self.values:
             if self._filter in str.lower(val):
                 match_count += 1
                 filtered_processes.append(val)
         self.values = filtered_processes
         return match_count
 
+    def is_filtering_on(self):
+        return self._filtering_flag
 
-    def kill_process(self,*args,**kwargs):
-        # Get the PID of the selected process
-        previous_parsed_text = ""
-        pid_to_kill = None
-        for _ in self.values[self.cursor_line].split():
-            if _ in SYSTEM_USERS:
-                pid_to_kill = int(previous_parsed_text)
-                break
-            else:
-                previous_parsed_text = _
-        self._logger.info("Terminating process with pid {0}".format(pid_to_kill))
-        target = psutil.Process(int(pid_to_kill))
-        try:
-            target.terminate()
-            self._logger.info("Terminated process with pid {0}".format(pid_to_kill))
-        except:
-            self._logger.info("Not able to terminate process with pid: {0}".format(pid_to_kill),
-                              exc_info=True)
-
-
-    def quit(self,*args,**kwargs):
-        raise KeyboardInterrupt
+    def set_uncurtailed_process_data(self, processes_info):
+        self._uncurtailed_process_data = processes_info
 
 
 class MultiLineWidget(npyscreen.BoxTitle):
@@ -397,7 +447,8 @@ class PtopGUI(npyscreen.NPSApp):
                 )
             if not self.processes_table.entry_widget.is_filtering_on():
                 self.processes_table.entry_widget.values =  curtailed_processes_data
-            self.processes_table.entry_widget.set_unfiltered_values(curtailed_processes_data)
+            # Set the processes data dictionary to uncurtailed processes data
+            self.processes_table.entry_widget.set_uncurtailed_process_data(self._processes_data)
             self.processes_table.entry_widget.update(clear=True)
 
             ''' This will update all the lazy updates at once, instead of .display() [fast]
@@ -411,29 +462,40 @@ class PtopGUI(npyscreen.NPSApp):
             self._logger.info("Some of the stats reading failed",exc_info=True)
 
     def draw(self):
-        # setting the main window form
+        # Setting the main window form
         self.window = WindowForm(parentApp=self,
-                                 name="ptop[http://darxtrix.in/ptop]"
+                                 name="ptop [http://darxtrix.in/ptop]"
                                  )
 
+        # Setting the terminal dimensions by querying the underlying curses library 
         self._logger.info("Detected terminal size to be {0}".format(self.window.curses_pad.getmaxyx()))
-
-        max_y,max_x = self.window.curses_pad.getmaxyx()
         global PREVIOUS_TERMINAL_HEIGHT, PREVIOUS_TERMINAL_WIDTH
+        max_y,max_x = self.window.curses_pad.getmaxyx()
         PREVIOUS_TERMINAL_HEIGHT = max_y
         PREVIOUS_TERMINAL_WIDTH = max_x
 
         # Minimum terminal size should be used for scaling
-        # $ tput cols & $ tput lines
+        # $ tput cols & $ tput lines can be used for getting the terminal dimensions
+        # ptop won't be reponsive beyond (cols=107,lines=27)
         self.Y_SCALING_FACTOR = float(max_y)/27
         self.X_SCALING_FACTOR = float(max_x)/104
 
+        #####      Defaults            #######
+        LEFT_OFFSET = 1
+        TOP_OFFSET = 1
+
         #####      Overview widget     #######
 
-        OVERVIEW_WIDGET_REL_X = 1
-        OVERVIEW_WIDGET_REL_Y = 1
-        OVERVIEW_WIDGET_HEIGHT = int(math.ceil(5*self.Y_SCALING_FACTOR))
+        OVERVIEW_WIDGET_REL_X = LEFT_OFFSET
+        OVERVIEW_WIDGET_REL_Y = TOP_OFFSET
+        # equivalent to math.ceil =>  [ int(109.89) = 109 ]
+        OVERVIEW_WIDGET_HEIGHT = int(6*self.Y_SCALING_FACTOR)
         OVERVIEW_WIDGET_WIDTH = int(100*self.X_SCALING_FACTOR)
+        self._logger.info("Trying to draw Overview information box, x1 {0} x2 {1} y1 {2} y2 {3}".format(OVERVIEW_WIDGET_REL_X,
+                                                                                               OVERVIEW_WIDGET_REL_X+OVERVIEW_WIDGET_WIDTH,
+                                                                                               OVERVIEW_WIDGET_REL_Y,
+                                                                                               OVERVIEW_WIDGET_REL_Y+OVERVIEW_WIDGET_HEIGHT)
+                                                                                               )
         self.basic_stats = self.window.add(MultiLineWidget,
                                            name="Overview",
                                            relx=OVERVIEW_WIDGET_REL_X,
@@ -441,21 +503,21 @@ class PtopGUI(npyscreen.NPSApp):
                                            max_height=OVERVIEW_WIDGET_HEIGHT,
                                            max_width=OVERVIEW_WIDGET_WIDTH
                                            )
-        self._logger.info("Overview information box drawn, x1 {0} x2 {1} y1 {2} y2 {3}".format(OVERVIEW_WIDGET_REL_X,
-                                                                                               OVERVIEW_WIDGET_REL_X+OVERVIEW_WIDGET_WIDTH,
-                                                                                               OVERVIEW_WIDGET_REL_Y,
-                                                                                               OVERVIEW_WIDGET_REL_Y+OVERVIEW_WIDGET_HEIGHT)
-                                                                                               )
         self.basic_stats.value = ""
         self.basic_stats.entry_widget.editable = False
 
 
         ######    Memory Usage widget  #########
 
-        MEMORY_USAGE_WIDGET_REL_X = 1
-        MEMORY_USAGE_WIDGET_REL_Y = int(math.ceil(5*self.Y_SCALING_FACTOR)+1)
+        MEMORY_USAGE_WIDGET_REL_X = LEFT_OFFSET
+        MEMORY_USAGE_WIDGET_REL_Y = OVERVIEW_WIDGET_REL_Y + OVERVIEW_WIDGET_HEIGHT
         MEMORY_USAGE_WIDGET_HEIGHT = int(10*self.Y_SCALING_FACTOR)
         MEMORY_USAGE_WIDGET_WIDTH = int(50*self.X_SCALING_FACTOR)
+        self._logger.info("Trying to draw Memory Usage information box, x1 {0} x2 {1} y1 {2} y2 {3}".format(MEMORY_USAGE_WIDGET_REL_X,
+                                                                                                   MEMORY_USAGE_WIDGET_REL_X+MEMORY_USAGE_WIDGET_WIDTH,
+                                                                                                   MEMORY_USAGE_WIDGET_REL_Y,
+                                                                                                   MEMORY_USAGE_WIDGET_REL_Y+MEMORY_USAGE_WIDGET_HEIGHT)
+                                                                                                   )
         self.memory_chart = self.window.add(MultiLineWidget,
                                             name="Memory Usage",
                                             relx=MEMORY_USAGE_WIDGET_REL_X,
@@ -463,21 +525,21 @@ class PtopGUI(npyscreen.NPSApp):
                                             max_height=MEMORY_USAGE_WIDGET_HEIGHT,
                                             max_width=MEMORY_USAGE_WIDGET_WIDTH
                                             )
-        self._logger.info("Memory Usage information box drawn, x1 {0} x2 {1} y1 {2} y2 {3}".format(MEMORY_USAGE_WIDGET_REL_X,
-                                                                                                   MEMORY_USAGE_WIDGET_REL_X+MEMORY_USAGE_WIDGET_WIDTH,
-                                                                                                   MEMORY_USAGE_WIDGET_REL_Y,
-                                                                                                   MEMORY_USAGE_WIDGET_REL_Y+MEMORY_USAGE_WIDGET_HEIGHT)
-                                                                                                   )
         self.memory_chart.value = ""
         self.memory_chart.entry_widget.editable = False
 
 
         ######    CPU Usage widget  #########
 
-        CPU_USAGE_WIDGET_REL_X = int(52*self.X_SCALING_FACTOR)
-        CPU_USAGE_WIDGET_REL_Y = int(math.ceil(5*self.Y_SCALING_FACTOR)+1)
-        CPU_USAGE_WIDGET_HEIGHT = int(10*self.Y_SCALING_FACTOR)
-        CPU_USAGE_WIDGET_WIDTH = int(49*self.X_SCALING_FACTOR)
+        CPU_USAGE_WIDGET_REL_X = MEMORY_USAGE_WIDGET_REL_X + MEMORY_USAGE_WIDGET_WIDTH
+        CPU_USAGE_WIDGET_REL_Y = MEMORY_USAGE_WIDGET_REL_Y
+        CPU_USAGE_WIDGET_HEIGHT = MEMORY_USAGE_WIDGET_HEIGHT
+        CPU_USAGE_WIDGET_WIDTH = MEMORY_USAGE_WIDGET_WIDTH
+        self._logger.info("Trying to draw CPU Usage information box, x1 {0} x2 {1} y1 {2} y2 {3}".format(CPU_USAGE_WIDGET_REL_X,
+                                                                                                CPU_USAGE_WIDGET_REL_X+CPU_USAGE_WIDGET_WIDTH,
+                                                                                                CPU_USAGE_WIDGET_REL_Y,
+                                                                                                CPU_USAGE_WIDGET_REL_Y+CPU_USAGE_WIDGET_HEIGHT)
+                                                                                                )
         self.cpu_chart = self.window.add(MultiLineWidget,
                                          name="CPU Usage",
                                          relx=CPU_USAGE_WIDGET_REL_X,
@@ -485,33 +547,28 @@ class PtopGUI(npyscreen.NPSApp):
                                          max_height=CPU_USAGE_WIDGET_HEIGHT,
                                          max_width=CPU_USAGE_WIDGET_WIDTH
                                          )
-        self._logger.info("CPU Usage information box drawn, x1 {0} x2 {1} y1 {2} y2 {3}".format(CPU_USAGE_WIDGET_REL_X,
-                                                                                                CPU_USAGE_WIDGET_REL_X+CPU_USAGE_WIDGET_WIDTH,
-                                                                                                CPU_USAGE_WIDGET_REL_Y,
-                                                                                                CPU_USAGE_WIDGET_REL_Y+CPU_USAGE_WIDGET_HEIGHT)
-                                                                                                )
         self.cpu_chart.value = "" 
         self.cpu_chart.entry_widget.editable = False
 
 
         ######    Processes Info widget  #########
 
-        PROCESSES_INFO_WIDGET_REL_X = 1
-        PROCESSES_INFO_WIDGET_REL_Y = int(16*self.Y_SCALING_FACTOR)
+        PROCESSES_INFO_WIDGET_REL_X = LEFT_OFFSET
+        PROCESSES_INFO_WIDGET_REL_Y = CPU_USAGE_WIDGET_REL_Y + CPU_USAGE_WIDGET_HEIGHT
         PROCESSES_INFO_WIDGET_HEIGHT = int(8*self.Y_SCALING_FACTOR)
-        PROCESSES_INFO_WIDGET_WIDTH = int(100*self.X_SCALING_FACTOR)
+        PROCESSES_INFO_WIDGET_WIDTH = OVERVIEW_WIDGET_WIDTH
+        self._logger.info("Trying to draw Processes information box, x1 {0} x2 {1} y1 {2} y2 {3}".format(PROCESSES_INFO_WIDGET_REL_X,
+                                                                                                PROCESSES_INFO_WIDGET_REL_X+PROCESSES_INFO_WIDGET_WIDTH,
+                                                                                                PROCESSES_INFO_WIDGET_REL_Y,
+                                                                                                PROCESSES_INFO_WIDGET_REL_Y+PROCESSES_INFO_WIDGET_HEIGHT)
+                                                                                                )
         self.processes_table = self.window.add(MultiLineActionWidget,
                                                name="Processes",
                                                relx=PROCESSES_INFO_WIDGET_REL_X,
                                                rely=PROCESSES_INFO_WIDGET_REL_Y,
                                                max_height=PROCESSES_INFO_WIDGET_HEIGHT,
-                                               max_width=PROCESSES_INFO_WIDGET_WIDTH
+                                               max_width=PROCESSES_INFO_WIDGET_WIDTH-1
                                                )
-        self._logger.info("Processes information box drawn, x1 {0} x2 {1} y1 {2} y2 {3}".format(PROCESSES_INFO_WIDGET_REL_X,
-                                                                                                PROCESSES_INFO_WIDGET_REL_X+PROCESSES_INFO_WIDGET_WIDTH,
-                                                                                                PROCESSES_INFO_WIDGET_REL_Y,
-                                                                                                PROCESSES_INFO_WIDGET_REL_Y+PROCESSES_INFO_WIDGET_HEIGHT)
-                                                                                                )
         self.processes_table.entry_widget.values = []
         self.processes_table.entry_widget.scroll_exit = False
         self.cpu_chart.entry_widget.editable = False
@@ -519,8 +576,8 @@ class PtopGUI(npyscreen.NPSApp):
 
         ######   Actions widget  #########
 
-        ACTIONS_WIDGET_REL_X = 2
-        ACTIONS_WIDGET_REL_Y = int(24*self.Y_SCALING_FACTOR)
+        ACTIONS_WIDGET_REL_X = LEFT_OFFSET
+        ACTIONS_WIDGET_REL_Y = PROCESSES_INFO_WIDGET_REL_Y + PROCESSES_INFO_WIDGET_HEIGHT
         self.actions = self.window.add(npyscreen.FixedText,
                                        relx=ACTIONS_WIDGET_REL_X,
                                        rely=ACTIONS_WIDGET_REL_Y
@@ -528,7 +585,7 @@ class PtopGUI(npyscreen.NPSApp):
         self._logger.info("Actions box drawn, x1 {0} y1 {1}".format(ACTIONS_WIDGET_REL_X,  
                                                                     ACTIONS_WIDGET_REL_Y)
                                                                     )
-        self.actions.value = "^K:Kill\t\t^N:Memory Sort\t\t^T:Time Sort\t\t^R:Reset\t\tg:Top\t\t^Q:Quit\t\t^F:Filter"
+        self.actions.value = "^K:Kill\t\t^N:Memory Sort\t\t^T:Time Sort\t\t^R:Reset\t\tg:Top\t\t^Q:Quit\t\t^F:Filter\t\t^L:Info"
         self.actions.display()
         self.actions.editable = False
 
