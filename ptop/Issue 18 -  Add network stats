@@ -1,0 +1,6 @@
+net = psutil.net_io_counters()
+sentt = net[0]*0.000001
+sentt = str(round(sentt,2))
+recc = net[1]*0.000001
+recc = str(round(recc,2))
+row4 = "Network Usage:\nSent/Received  {4}{0: <7}/{1: >7} MB{4}{2: >2} {5} {4}{3: <8}".format(sentt, recc, '', '', " "*int(4*self.X_SCALING_FACTOR), " "*int(9*self.X_SCALING_FACTOR))
