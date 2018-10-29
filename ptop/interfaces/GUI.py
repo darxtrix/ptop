@@ -184,7 +184,7 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         self.process_details_view_helper.display()
         self.process_details_view_helper.edit()
 
-    #ISSUE 1 VINU
+    #Issue 33 Killing a process making ptop exit abruptly 
     def _kill_process(self,*args,**kwargs):
         # Get the PID of the selected process
         try:
@@ -199,7 +199,9 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
 	                              exc_info=True)
         except:
         	self._logger.info("No process selected")
-    #ISSUE 2 VINU
+
+    # Issue 26 Kill ptop properly 
+
     def _quit(self,*args,**kwargs):
         my_pid = os.getpid()
         target = psutil.Process(int(my_pid))
@@ -331,7 +333,7 @@ class PtopGUI(npyscreen.NPSApp):
         chart_array[self.CHART_WIDTH-1] = y
         chart_array[self.CHART_WIDTH-2] = y
 
-        #ISSUE 0 VINU
+        # Issue 34 - Python 3 compatibility issue 
         for x in range(0,self.CHART_WIDTH):
             for y in range(self.CHART_HEIGHT,self.CHART_HEIGHT-chart_array[x],-1):
                 canvas.set(x,y)
@@ -384,7 +386,7 @@ class PtopGUI(npyscreen.NPSApp):
             system_info = self.statistics['System']['text']
             cpu_info = self.statistics['CPU']['graph']
             
-            #ISSUE 0 VINU
+            # Issue 34 Python 3 Compatability Issue 
             ttotal = system_info['running_time'].total_seconds()
             hhours = int((ttotal/60)//60)
             mmins = int((ttotal-60*60*hhours)//60)
@@ -411,14 +413,14 @@ class PtopGUI(npyscreen.NPSApp):
                                                                                                    processes_info["running_threads"],
                                                                                                    " "*int(4*self.X_SCALING_FACTOR),
                                                                                                    " "*int(9*self.X_SCALING_FACTOR))
-            #ISSUE 0 VINU
+            #Issue 34 Python 3 Compatability Issue 
             row3 = "Main Memory    {4}{0: <7}/{1: >7} MB{4}{2: >2} %{5}Boot Time{4}{3: <8}".format(memory_info["active"],
                                                                                                    memory_info["total"],
                                                                                                    memory_info["percentage"],
                                                                                                    timeStr,
                                                                                                    " "*int(4*self.X_SCALING_FACTOR),
                                                                                                    " "*int(9*self.X_SCALING_FACTOR))
-			#ISSUE 3 SMEET
+			# Issue 18 Add network stats 
             net = psutil.net_io_counters()
             sentt = net[0]*0.000001
             sentt = str(round(sentt,2))
