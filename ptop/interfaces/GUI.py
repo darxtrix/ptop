@@ -321,8 +321,8 @@ class PtopGUI(npyscreen.NPSApp):
         chart_array[self.CHART_WIDTH-1] = y
         chart_array[self.CHART_WIDTH-2] = y
 
-        for x in xrange(0,self.CHART_WIDTH):
-            for y in xrange(self.CHART_HEIGHT,self.CHART_HEIGHT-chart_array[x],-1):
+        for x in range(0,self.CHART_WIDTH):
+            for y in range(self.CHART_HEIGHT,self.CHART_HEIGHT-chart_array[x],-1):
                 canvas.set(x,y)
 
         return canvas.frame(0,0,self.CHART_WIDTH,self.CHART_HEIGHT)
@@ -373,6 +373,19 @@ class PtopGUI(npyscreen.NPSApp):
             system_info = self.statistics['System']['text']
             cpu_info = self.statistics['CPU']['graph']
 
+            #.total_seconds() to hours:min:sec format
+            ttotal = system_info['running_time'].total_seconds()
+            hhours = int((ttotal/60)//60)
+            mmins = int((ttotal-60*60*hhours)//60)
+            ssecs = int(ttotal - hhours*60*60 - mmins*60)
+            mmins = str(mmins)
+            hhours = str(hhours)
+            ssecs = str(ssecs)
+            hhours = '0'*(2-len(hhours)) + hhours
+            mmins = '0'*(2-len(mmins)) + mmins
+            ssecs = '0'*(2-len(ssecs)) + ssecs
+            timeStr = hhours + ':' + mmins + ':' + ssecs
+
             #### Overview information ####
 
             row1 = "Disk Usage (/) {4}{0: <6}/{1: >6} MB{4}{2: >2} %{5}Processes{4}{3: <8}".format(disk_info["used"],
@@ -392,7 +405,7 @@ class PtopGUI(npyscreen.NPSApp):
             row3 = "Main Memory    {4}{0: <6}/{1: >6} MB{4}{2: >2} %{5}Boot Time{4}{3: <8}".format(memory_info["active"],
                                                                                                    memory_info["total"],
                                                                                                    memory_info["percentage"],
-                                                                                                   system_info['running_time'],
+                                                                                                   timeStr,
                                                                                                    " "*int(4*self.X_SCALING_FACTOR),
                                                                                                    " "*int(9*self.X_SCALING_FACTOR))
 
