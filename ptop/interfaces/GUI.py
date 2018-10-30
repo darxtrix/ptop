@@ -20,7 +20,6 @@ class ProcessDetailsInfoBox(npyscreen.Popup):
     This widget is used to who the detailed information about the selected process 
     in the processes table. Curretly only the port information is shown for a selected
     process.
-
     Set them to fix the position
     SHOW_ATX  = 10
     SHOW_ATY  = 2
@@ -394,9 +393,20 @@ class PtopGUI(npyscreen.NPSApp):
                                                                                                    memory_info["percentage"],
                                                                                                    system_info['running_time'],
                                                                                                    " "*int(4*self.X_SCALING_FACTOR),
+            #Add Network Stats                                                                                       " "*int(9*self.X_SCALING_FACTOR))
+            net = psutil.net_io_counters()
+            sentt = net[0]*0.000001
+            sentt = str(round(sentt,2))
+            recc = net[1]*0.000001
+            recc = str(round(recc,2))
+            row4 = "Network Usage:\nSent/Received  {4}{0: <7}/{1: >7} MB{4}{2: >2} {5} {4}{3: <8}".format(sentt,
+                                                                                                   recc,
+                                                                                                   '',
+                                                                                                   '',
+                                                                                                   " "*int(4*self.X_SCALING_FACTOR),
                                                                                                    " "*int(9*self.X_SCALING_FACTOR))
 
-            self.basic_stats.value = row1 + '\n' + row2 + '\n' + row3
+            self.basic_stats.value = row1 + '\n' + row2 + '\n' + row3 + '\n' + row4
             # Lazy update to GUI
             self.basic_stats.update(clear=True)
 
@@ -596,7 +606,6 @@ class PtopGUI(npyscreen.NPSApp):
             scaling factors now the dimensions of the CPU_WIDGETS/MEMORY _WIDGETS are used for calculation
             of the dimensions of the charts. There is padding of width 1 between the boundaries of the widgets 
             and the charts
-
             # self.CHART_WIDTH = int(self.CHART_WIDTH*self.X_SCALING_FACTOR)
             # self.CHART_HEIGHT = int(self.CHART_HEIGHT*self.Y_SCALING_FACTOR)
         '''
