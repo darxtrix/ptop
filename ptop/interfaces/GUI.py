@@ -184,8 +184,7 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         self.process_details_view_helper.display()
         self.process_details_view_helper.edit()
 
-    #_kill_process takes *args, **kwargs
-    def _kill_process(self,*args,**kwargs):
+    def _kill_process(self):
         # Get the PID of the selected process
         pid_to_kill = self._get_selected_process_pid()
         self._logger.info("Terminating process with pid {0}".format(pid_to_kill))
@@ -198,6 +197,13 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
                               exc_info=True)
 
     def _quit(self,*args,**kwargs):
+        #Kill ptop while quitting
+        my_pid = os.getpid()
+        target = psutil.Process(int(my_pid))
+        try:
+            target.terminate()
+        except:
+            self._logger.info("Operation failed", exc_info=True)
         raise KeyboardInterrupt
 
     def filter_processes(self):
