@@ -6,7 +6,7 @@ import npyscreen, math, drawille
 import psutil, logging, weakref
 from ptop.utils import ThreadJob
 from ptop.constants import SYSTEM_USERS, SUPPORTED_THEMES
-import os
+
 
 # global flags defining actions, would like them to be object vars
 TIME_SORT = False
@@ -63,6 +63,7 @@ class ProcessDetailsInfoBox(npyscreen.PopupWide):
 
     def adjust_widgets(self):
         pass
+
 
 
 class ProcessFilterInputBox(npyscreen.Popup):
@@ -208,31 +209,19 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         self.process_details_view_helper.display()
         self.process_details_view_helper.edit()
 
-    #Issue 33 Killing a process making ptop exit abruptly 
-    def _kill_process(self,*args,**kwargs):
+    def _kill_process(self):
         # Get the PID of the selected process
+        pid_to_kill = self._get_selected_process_pid()
+        self._logger.info("Terminating process with pid {0}".format(pid_to_kill))
+        target = psutil.Process(int(pid_to_kill))
         try:
-	        pid_to_kill = self._get_selected_process_pid()
-	        self._logger.info("Terminating process with pid {0}".format(pid_to_kill))
-	        target = psutil.Process(int(pid_to_kill))
-	        try:
-	            target.terminate()
-	            self._logger.info("Terminated process with pid {0}".format(pid_to_kill))
-	        except:
-	            self._logger.info("Not able to terminate process with pid: {0}".format(pid_to_kill),
-	                              exc_info=True)
+            target.terminate()
+            self._logger.info("Terminated process with pid {0}".format(pid_to_kill))
         except:
-        	self._logger.info("No process selected")
-
-    # Issue 26 Kill ptop properly 
+            self._logger.info("Not able to terminate process with pid: {0}".format(pid_to_kill),
+                              exc_info=True)
 
     def _quit(self,*args,**kwargs):
-        my_pid = os.getpid()
-        target = psutil.Process(int(my_pid))
-        try:
-        	target.terminate()
-        except:
-        	self._logger.info("Operation failed", exc_info=True)
         raise KeyboardInterrupt
 
     def filter_processes(self):
@@ -357,9 +346,8 @@ class PtopGUI(npyscreen.NPSApp):
         chart_array[self.CHART_WIDTH-1] = y
         chart_array[self.CHART_WIDTH-2] = y
 
-        # Issue 34 - Python 3 compatibility issue 
-        for x in range(0,self.CHART_WIDTH):
-            for y in range(self.CHART_HEIGHT,self.CHART_HEIGHT-chart_array[x],-1):
+        for x in xrange(0,self.CHART_WIDTH):
+            for y in xrange(self.CHART_HEIGHT,self.CHART_HEIGHT-chart_array[x],-1):
                 canvas.set(x,y)
 
         return canvas.frame(0,0,self.CHART_WIDTH,self.CHART_HEIGHT)
@@ -409,55 +397,31 @@ class PtopGUI(npyscreen.NPSApp):
             processes_info = self.statistics['Process']['text']
             system_info = self.statistics['System']['text']
             cpu_info = self.statistics['CPU']['graph']
-            
-            # Issue 34 Python 3 Compatability Issue 
-            ttotal = system_info['running_time'].total_seconds()
-            hhours = int((ttotal/60)//60)
-            mmins = int((ttotal-60*60*hhours)//60)
-            ssecs = int(ttotal - hhours*60*60 - mmins*60)
-            mmins = str(mmins)
-            hhours = str(hhours)
-            ssecs = str(ssecs)
-            hhours = '0'*(2-len(hhours)) + hhours
-            mmins = '0'*(2-len(mmins)) + mmins
-            ssecs = '0'*(2-len(ssecs)) + ssecs
-            timeStr = hhours + ':' + mmins + ':' + ssecs
-            
+
             #### Overview information ####
-            row1 = "Disk Usage (/) {4}{0: <7}/{1: >7} MB{4}{2: >2} %{5}Processes{4}{3: <8}".format(disk_info["used"],
+
+            row1 = "Disk Usage (/) {4}{0: <6}/{1: >6} MB{4}{2: >2} %{5}Processes{4}{3: <8}".format(disk_info["used"],
                                                                                                    disk_info["total"],
                                                                                                    disk_info["percentage"],
                                                                                                    processes_info["running_processes"],
                                                                                                    " "*int(4*self.X_SCALING_FACTOR),
                                                                                                    " "*int(9*self.X_SCALING_FACTOR))
 
-            row2 = "Swap Memory    {4}{0: <7}/{1: >7} MB{4}{2: >2} %{5}Threads  {4}{3: <8}".format(swap_info["active"],
+            row2 = "Swap Memory    {4}{0: <6}/{1: >6} MB{4}{2: >2} %{5}Threads  {4}{3: <8}".format(swap_info["active"],
                                                                                                    swap_info["total"],
                                                                                                    swap_info["percentage"],
                                                                                                    processes_info["running_threads"],
                                                                                                    " "*int(4*self.X_SCALING_FACTOR),
                                                                                                    " "*int(9*self.X_SCALING_FACTOR))
-            #Issue 34 Python 3 Compatability Issue 
-            row3 = "Main Memory    {4}{0: <7}/{1: >7} MB{4}{2: >2} %{5}Boot Time{4}{3: <8}".format(memory_info["active"],
+
+            row3 = "Main Memory    {4}{0: <6}/{1: >6} MB{4}{2: >2} %{5}Boot Time{4}{3: <8}".format(memory_info["active"],
                                                                                                    memory_info["total"],
                                                                                                    memory_info["percentage"],
-                                                                                                   timeStr,
-                                                                                                   " "*int(4*self.X_SCALING_FACTOR),
-                                                                                                   " "*int(9*self.X_SCALING_FACTOR))
-			# Issue 18 Add network stats 
-            net = psutil.net_io_counters()
-            sentt = net[0]*0.000001
-            sentt = str(round(sentt,2))
-            recc = net[1]*0.000001
-            recc = str(round(recc,2))
-            row4 = "Network Usage:\nSent/Received  {4}{0: <7}/{1: >7} MB{4}{2: >2} {5} {4}{3: <8}".format(sentt,
-                                                                                                   recc,
-                                                                                                   '',
-                                                                                                   '',
+                                                                                                   system_info['running_time'],
                                                                                                    " "*int(4*self.X_SCALING_FACTOR),
                                                                                                    " "*int(9*self.X_SCALING_FACTOR))
 
-            self.basic_stats.value = row1 + '\n' + row2 + '\n' + row3 + '\n' + row4
+            self.basic_stats.value = row1 + '\n' + row2 + '\n' + row3
             # Lazy update to GUI
             self.basic_stats.update(clear=True)
 
@@ -657,7 +621,6 @@ class PtopGUI(npyscreen.NPSApp):
             scaling factors now the dimensions of the CPU_WIDGETS/MEMORY _WIDGETS are used for calculation
             of the dimensions of the charts. There is padding of width 1 between the boundaries of the widgets 
             and the charts
-
             # self.CHART_WIDTH = int(self.CHART_WIDTH*self.X_SCALING_FACTOR)
             # self.CHART_HEIGHT = int(self.CHART_HEIGHT*self.Y_SCALING_FACTOR)
         '''
@@ -680,4 +643,3 @@ class PtopGUI(npyscreen.NPSApp):
         # time(ms) to wait for user interactions
         self.keypress_timeout_default = 10
         self.draw()
-
