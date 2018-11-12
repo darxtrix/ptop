@@ -6,8 +6,8 @@ import npyscreen, math, drawille
 import psutil, logging, weakref
 from ptop.utils import ThreadJob
 from ptop.constants import SYSTEM_USERS, SUPPORTED_THEMES
-import os
 import lehar
+
 
 # global flags defining actions, would like them to be object vars
 TIME_SORT = False
@@ -185,29 +185,19 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         self.process_details_view_helper.display()
         self.process_details_view_helper.edit()
 
-    #ISSUE 1 VINU
-    def _kill_process(self,*args,**kwargs):
+    def _kill_process(self):
         # Get the PID of the selected process
+        pid_to_kill = self._get_selected_process_pid()
+        self._logger.info("Terminating process with pid {0}".format(pid_to_kill))
+        target = psutil.Process(int(pid_to_kill))
         try:
-	        pid_to_kill = self._get_selected_process_pid()
-	        self._logger.info("Terminating process with pid {0}".format(pid_to_kill))
-	        target = psutil.Process(int(pid_to_kill))
-	        try:
-	            target.terminate()
-	            self._logger.info("Terminated process with pid {0}".format(pid_to_kill))
-	        except:
-	            self._logger.info("Not able to terminate process with pid: {0}".format(pid_to_kill),
-	                              exc_info=True)
+            target.terminate()
+            self._logger.info("Terminated process with pid {0}".format(pid_to_kill))
         except:
-        	self._logger.info("No process selected")
-    #ISSUE 2 VINU
+            self._logger.info("Not able to terminate process with pid: {0}".format(pid_to_kill),
+                              exc_info=True)
+
     def _quit(self,*args,**kwargs):
-        my_pid = os.getpid()
-        target = psutil.Process(int(my_pid))
-        try:
-        	target.terminate()
-        except:
-        	self._logger.info("Operation failed", exc_info=True)
         raise KeyboardInterrupt
 
     def filter_processes(self):
@@ -327,7 +317,7 @@ class PtopGUI(npyscreen.NPSApp):
         elif chart_type == 'memory':
             chart_array = self.memory_array
         else:
-        	chart_array = self.network_array
+            chart_array = self.network_array
         
         for i in range(self.CHART_WIDTH):
             if i >= 2:
@@ -336,9 +326,8 @@ class PtopGUI(npyscreen.NPSApp):
         chart_array[self.CHART_WIDTH-1] = y
         chart_array[self.CHART_WIDTH-2] = y
 
-        #ISSUE 0 VINU
-        for x in range(0,self.CHART_WIDTH):
-            for y in range(self.CHART_HEIGHT,self.CHART_HEIGHT-chart_array[x],-1):
+        for x in xrange(0,self.CHART_WIDTH):
+            for y in xrange(self.CHART_HEIGHT,self.CHART_HEIGHT-chart_array[x],-1):
                 canvas.set(x,y)
 
         return canvas.frame(0,0,self.CHART_WIDTH,self.CHART_HEIGHT)
@@ -390,19 +379,6 @@ class PtopGUI(npyscreen.NPSApp):
             cpu_info = self.statistics['CPU']['graph']
             network_info = self.statistics['Network']['text']
 
-            #ISSUE 0 VINU
-            ttotal = system_info['running_time'].total_seconds()
-            hhours = int((ttotal/60)//60)
-            mmins = int((ttotal-60*60*hhours)//60)
-            ssecs = int(ttotal - hhours*60*60 - mmins*60)
-            mmins = str(mmins)
-            hhours = str(hhours)
-            ssecs = str(ssecs)
-            hhours = '0'*(2-len(hhours)) + hhours
-            mmins = '0'*(2-len(mmins)) + mmins
-            ssecs = '0'*(2-len(ssecs)) + ssecs
-            timeStr = hhours + ':' + mmins + ':' + ssecs
-            
             #### Overview information ####
             row1 = "Disk Usage (/) {4}{0: <7}/{1: >7} MB{4}{2: >2} %{5}Processes{4}{3: <8}".format(disk_info["used"],
                                                                                                    disk_info["total"],
@@ -417,14 +393,13 @@ class PtopGUI(npyscreen.NPSApp):
                                                                                                    processes_info["running_threads"],
                                                                                                    " "*int(4*self.X_SCALING_FACTOR),
                                                                                                    " "*int(9*self.X_SCALING_FACTOR))
-            #ISSUE 0 VINU
+          
             row3 = "Main Memory    {4}{0: <7}/{1: >7} MB{4}{2: >2} %{5}Boot Time{4}{3: <8}".format(memory_info["active"],
                                                                                                    memory_info["total"],
                                                                                                    memory_info["percentage"],
                                                                                                    timeStr,
                                                                                                    " "*int(4*self.X_SCALING_FACTOR),
                                                                                                    " "*int(9*self.X_SCALING_FACTOR))
-	    #ISSUE 3 SMEET
             net = psutil.net_io_counters()
             sentt = net[0]*0.000001
             sentt = str(round(sentt,2))
@@ -438,6 +413,7 @@ class PtopGUI(npyscreen.NPSApp):
                                                                                                    " "*int(9*self.X_SCALING_FACTOR))
 
             self.basic_stats.value = row1 + '\n' + row2 + '\n' + row3 + '\n' + row4
+
             # Lazy update to GUI
             self.basic_stats.update(clear=True)
 
@@ -462,11 +438,12 @@ class PtopGUI(npyscreen.NPSApp):
             next_peak_height = int(math.ceil((float(network_info['received'])/100)*self.CHART_HEIGHT))
 
             if next_peak_height > 100:
-            	next_peak_height = 100
+                next_peak_height = 100
             #print(self.cpu_array[100:126])
 
             self.network_chart.value = self.draw_chart(network_canvas,next_peak_height,'network') #lehar.draw(self.cpu_array[100:126])
             self.network_chart.update(clear=True)
+
 
             #### Processes table ####
 
@@ -543,7 +520,7 @@ class PtopGUI(npyscreen.NPSApp):
         OVERVIEW_WIDGET_REL_Y = TOP_OFFSET
         # equivalent to math.ceil =>  [ int(109.89) = 109 ]
         OVERVIEW_WIDGET_HEIGHT = int(6*self.Y_SCALING_FACTOR)
-        OVERVIEW_WIDGET_WIDTH = int(99.9*self.X_SCALING_FACTOR)
+        OVERVIEW_WIDGET_WIDTH = int(100*self.X_SCALING_FACTOR)
         self._logger.info("Trying to draw Overview information box, x1 {0} x2 {1} y1 {2} y2 {3}".format(OVERVIEW_WIDGET_REL_X,
                                                                                                OVERVIEW_WIDGET_REL_X+OVERVIEW_WIDGET_WIDTH,
                                                                                                OVERVIEW_WIDGET_REL_Y,
@@ -625,7 +602,6 @@ class PtopGUI(npyscreen.NPSApp):
         self.network_chart.entry_widget.editable = False
 
 
-
         ######    Processes Info widget  #########
 
         PROCESSES_INFO_WIDGET_REL_X = LEFT_OFFSET
@@ -685,6 +661,7 @@ class PtopGUI(npyscreen.NPSApp):
         self.cpu_array = [0]*self.CHART_WIDTH
         self.memory_array = [0]*self.CHART_WIDTH
         self.network_array = [0]*self.CHART_WIDTH
+
 
         # add subwidgets to the parent widget
         self.window.edit()
