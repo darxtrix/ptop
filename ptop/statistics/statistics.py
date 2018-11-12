@@ -14,10 +14,11 @@ logger = logging.getLogger('ptop.statistics')
 
 
 class Statistics:
-    def __init__(self,sensors_list,stop_event):
+    def __init__(self,sensors_list,stop_event,rate):
         '''
             Record keeping for primitive system parameters
         '''
+        self.rate = rate
         self.plugin_dir = os.path.join(os.path.dirname(__file__),'plugins') #plugins directory
         self.plugins = sensors_list # plugins list
         self.statistics = {} # statistics object to be passed to the GUI
@@ -29,9 +30,9 @@ class Statistics:
         '''
             Generate the stats using the plugins list periodically
         '''
-        for sensor in self.plugins:
+        for i, sensor in enumerate(self.plugins):
             # update the sensors value periodically
-            job = ThreadJob(sensor.update,self.stop_event,sensor.interval)
+            job = ThreadJob(sensor.update,self.stop_event,self.rate[i]/1000)
             job.start()
 
 
