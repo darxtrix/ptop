@@ -99,6 +99,7 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
             "^K" : self._kill_process,
             "^Q" : self._quit,
             "^R" : self._reset,
+            "^S" : self._restart_process,
             "^H" : self._do_process_filtering_work,
             "^L" : self._show_detailed_process_info,
             "^F" : self._do_process_filtering_work
@@ -157,6 +158,22 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         MEMORY_SORT = False
         PROCESS_RELEVANCE_SORT = True
         self._filtering_flag = False
+
+#ISSUE #45 iMshivji
+    def _restart_process(self,*args,**kwargs):
+        self._logger.info("Restarting the selected process")
+        pid_to_restart = self._get_selected_process_pid()
+        self._kill_process(self,args,*kwargs)
+        try:
+            process_name=psutil.Process(int(pid_to_restart)).name()
+            subprocess.Popen(process_name)
+        except:
+            try:
+                process_name=psutil.Process(int(pid_to_restart)).exe()    
+                subprocess.Popen(process_name)
+            except:
+                pass
+
 
     def _do_process_filtering_work(self,*args,**kwargs):
         '''
@@ -585,7 +602,7 @@ class PtopGUI(npyscreen.NPSApp):
         self._logger.info("Actions box drawn, x1 {0} y1 {1}".format(ACTIONS_WIDGET_REL_X,  
                                                                     ACTIONS_WIDGET_REL_Y)
                                                                     )
-        self.actions.value = "^K:Kill\t\t^N:Memory Sort\t\t^T:Time Sort\t\t^R:Reset\t\tg:Top\t\t^Q:Quit\t\t^F:Filter\t\t^L:Info"
+        self.actions.value = "^K:Kill\t\t^N:Memory Sort\t\t^T:Time Sort\t\t^R:Reset\t\tg:Top\t\t^Q:Quit\t\t^F:Filter\t\t^L:Info\t\t^S:Restart"
         self.actions.display()
         self.actions.editable = False
 
