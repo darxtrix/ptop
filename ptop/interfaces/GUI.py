@@ -267,7 +267,7 @@ class PtopGUI(npyscreen.NPSApp):
         # Flag to check if user is interacting (not used)
         self.is_user_interacting = False
         #Add sensor update rate
-        self.rate = min(rate)
+        self.rate = min(rate.values())
 
         # Main form
         self.window = None 
