@@ -29,65 +29,69 @@ def main():
                                  blackonwhite
                             ''')
 
-        parser.add_argument('-cpu',
-                            dest='cpu',
+        parser.add_argument('-csrt',
+                            dest='csrt',
                             action='store',
                             type=float,
                             required=False,
                             help=
                             '''
+                                CPU sensor response time;
+        						update interval in
+        						milli seconds less than 1000.
+        						For example 500
+                            ''')
+
+        parser.add_argument('-dsrt',
+                            dest='dsrt',
+                            action='store',
+                            type=float,
+                            required=False,
+                            help=
+                            '''
+                                Disk sensor response time;
                                 Input sensor
         						update interval in
         						milli seconds less than 1000.
         						For example 500
                             ''')
 
-        parser.add_argument('-disk',
-                            dest='disk',
+        parser.add_argument('-msrt',
+                            dest='msrt',
                             action='store',
                             type=float,
                             required=False,
                             help=
                             '''
+                                Memory sensor response time;
                                 Input sensor
         						update interval in
         						milli seconds less than 1000.
         						For example 500
                             ''')
 
-        parser.add_argument('-mem',
-                            dest='mem',
+        parser.add_argument('-psrt',
+                            dest='psrt',
                             action='store',
                             type=float,
                             required=False,
                             help=
                             '''
+                                Process sensor response time;
                                 Input sensor
         						update interval in
         						milli seconds less than 1000.
         						For example 500
                             ''')
 
-        parser.add_argument('-proc',
-                            dest='proc',
+        parser.add_argument('-ssrt',
+                            dest='ssrt',
                             action='store',
                             type=float,
                             required=False,
                             help=
                             '''
-                                Input sensor
-        						update interval in
-        						milli seconds less than 1000.
-        						For example 500
-                            ''')
-
-        parser.add_argument('-sys',
-                            dest='sys',
-                            action='store',
-                            type=float,
-                            required=False,
-                            help=
-                            '''
+                                System sensor response time;
                                 Input sensor
         						update interval in
         						milli seconds less than 1000.
@@ -100,45 +104,17 @@ def main():
 
         results = parser.parse_args()
 
-        if results.theme:
-            theme = results.theme
-        else:
-            theme = 'elegant'
-
-        if results.cpu:
-            cput = float(results.cpu)
-            if cput>1000:
-            	cput = 1000
-        else:
-            cput = 500
-
-        if results.disk:
-            diskt = float(results.disk)
-            if diskt>1000:
-            	diskt = 1000
-        else:
-            diskt = 500
-
-        if results.mem:
-            memt = float(results.mem)
-            if memt>1000:
-            	memt = 1000
-        else:
-            memt = 500
-
-        if results.proc:
-            proct = float(results.proc)
-            if proct>1000:
-            	proct = 1000
-        else:
-            proct = 500
-
-        if results.sys:
-            syst = float(results.sys)
-            if syst>1000:
-            	syst = 1000
-        else:
-            syst = 500
+        theme = (results.theme if results.theme else 'elegant')
+        csrt = (results.csrt if results.csrt else 1000)
+        csrt = (1000 if csrt>1000 else csrt)
+        dsrt = (results.dsrt if results.dsrt else 1000)
+        dsrt = (1000 if dsrt>1000 else dsrt)
+        msrt = (results.msrt if results.msrt else 1000)
+        msrt = (1000 if msrt>1000 else msrt)
+        psrt = (results.psrt if results.psrt else 1000)
+        psrt = (1000 if psrt>1000 else psrt)
+        ssrt = (results.ssrt if results.ssrt else 1000)
+        ssrt = (1000 if ssrt>1000 else ssrt)
 
         sensor_rate = [cput, diskt, memt, proct, syst]
         # app wide global stop flag
