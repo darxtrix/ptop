@@ -184,7 +184,8 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         self.process_details_view_helper.display()
         self.process_details_view_helper.edit()
 
-    def _kill_process(self):
+    #_kill_process takes *args, **kwargs
+    def _kill_process(self,*args,**kwargs):
         # Get the PID of the selected process
         pid_to_kill = self._get_selected_process_pid()
         self._logger.info("Terminating process with pid {0}".format(pid_to_kill))
