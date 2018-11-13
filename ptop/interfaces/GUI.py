@@ -3,7 +3,7 @@
 '''
 
 import npyscreen, math, drawille
-import psutil, logging, weakref
+import psutil, logging, weakref, sys
 from ptop.utils import ThreadJob
 from ptop.constants import SYSTEM_USERS, SUPPORTED_THEMES
 
@@ -467,6 +467,8 @@ class PtopGUI(npyscreen.NPSApp):
         self.window = WindowForm(parentApp=self,
                                  name="ptop [http://darxtrix.in/ptop]"
                                  )
+        MIN_ALLOWED_TERMINAL_WIDTH = 104
+        MIN_ALLOWED_TERMINAL_HEIGHT = 28
 
         # Setting the terminal dimensions by querying the underlying curses library 
         self._logger.info("Detected terminal size to be {0}".format(self.window.curses_pad.getmaxyx()))
@@ -475,10 +477,17 @@ class PtopGUI(npyscreen.NPSApp):
         PREVIOUS_TERMINAL_HEIGHT = max_y
         PREVIOUS_TERMINAL_WIDTH = max_x
 
+        # Also make ptop exists cleanly if screen is drawn beyond the lower limit
+        if max_x < MIN_ALLOWED_TERMINAL_WIDTH or \
+            max_y < MIN_ALLOWED_TERMINAL_HEIGHT:
+            self._logger.info("Terminal sizes than width = 104 and height = 28, exiting")
+            sys.stdout.write("Ptop does not support lower terminal sizes than width = 104 and height = 28. Please resize the terminal and restart.")
+            raise KeyboardInterrupt
+
         # Minimum terminal size should be used for scaling
         # $ tput cols & $ tput lines can be used for getting the terminal dimensions
-        # ptop won't be reponsive beyond (cols=107,lines=27)
-        self.Y_SCALING_FACTOR = float(max_y)/27
+        # ptop won't be reponsive beyond (cols=104, lines=27)
+        self.Y_SCALING_FACTOR = float(max_y)/28
         self.X_SCALING_FACTOR = float(max_x)/104
 
         #####      Defaults            #######
@@ -486,7 +495,6 @@ class PtopGUI(npyscreen.NPSApp):
         TOP_OFFSET = 1
 
         #####      Overview widget     #######
-
         OVERVIEW_WIDGET_REL_X = LEFT_OFFSET
         OVERVIEW_WIDGET_REL_Y = TOP_OFFSET
         # equivalent to math.ceil =>  [ int(109.89) = 109 ]
@@ -509,7 +517,6 @@ class PtopGUI(npyscreen.NPSApp):
 
 
         ######    Memory Usage widget  #########
-
         MEMORY_USAGE_WIDGET_REL_X = LEFT_OFFSET
         MEMORY_USAGE_WIDGET_REL_Y = OVERVIEW_WIDGET_REL_Y + OVERVIEW_WIDGET_HEIGHT
         MEMORY_USAGE_WIDGET_HEIGHT = int(10*self.Y_SCALING_FACTOR)
@@ -531,7 +538,6 @@ class PtopGUI(npyscreen.NPSApp):
 
 
         ######    CPU Usage widget  #########
-
         CPU_USAGE_WIDGET_REL_X = MEMORY_USAGE_WIDGET_REL_X + MEMORY_USAGE_WIDGET_WIDTH
         CPU_USAGE_WIDGET_REL_Y = MEMORY_USAGE_WIDGET_REL_Y
         CPU_USAGE_WIDGET_HEIGHT = MEMORY_USAGE_WIDGET_HEIGHT
@@ -553,7 +559,6 @@ class PtopGUI(npyscreen.NPSApp):
 
 
         ######    Processes Info widget  #########
-
         PROCESSES_INFO_WIDGET_REL_X = LEFT_OFFSET
         PROCESSES_INFO_WIDGET_REL_Y = CPU_USAGE_WIDGET_REL_Y + CPU_USAGE_WIDGET_HEIGHT
         PROCESSES_INFO_WIDGET_HEIGHT = int(8*self.Y_SCALING_FACTOR)
@@ -576,22 +581,22 @@ class PtopGUI(npyscreen.NPSApp):
 
 
         ######   Actions widget  #########
-
+        # By default this widget takes 3 lines and 1 line for text and 2 for the invisible boundary lines
+        # So (tput lines - rely) should be at least 3
         ACTIONS_WIDGET_REL_X = LEFT_OFFSET
         ACTIONS_WIDGET_REL_Y = PROCESSES_INFO_WIDGET_REL_Y + PROCESSES_INFO_WIDGET_HEIGHT
+        self._logger.info("Trying to draw the actions box, x1 {0} y1 {1}".format(ACTIONS_WIDGET_REL_X,  
+                                                                    ACTIONS_WIDGET_REL_Y)
+                                                                    )
         self.actions = self.window.add(npyscreen.FixedText,
                                        relx=ACTIONS_WIDGET_REL_X,
                                        rely=ACTIONS_WIDGET_REL_Y
                                        )
-        self._logger.info("Actions box drawn, x1 {0} y1 {1}".format(ACTIONS_WIDGET_REL_X,  
-                                                                    ACTIONS_WIDGET_REL_Y)
-                                                                    )
         self.actions.value = "^K:Kill\t\t^N:Memory Sort\t\t^T:Time Sort\t\t^R:Reset\t\tg:Top\t\t^Q:Quit\t\t^F:Filter\t\t^L:Info"
         self.actions.display()
         self.actions.editable = False
 
         ######   CPU/Memory charts  #########
-
         '''
             Earlier static dimensions (32*90) were used after multiplication with the corresponding
             scaling factors now the dimensions of the CPU_WIDGETS/MEMORY _WIDGETS are used for calculation
