@@ -15,19 +15,22 @@ PROCESS_RELEVANCE_SORT = True
 PREVIOUS_TERMINAL_WIDTH = None
 PREVIOUS_TERMINAL_HEIGHT = None
 
-class ProcessDetailsInfoBox(npyscreen.Popup):
+class ProcessDetailsInfoBox(npyscreen.PopupWide):
+    
     '''
     This widget is used to who the detailed information about the selected process 
     in the processes table. Curretly only the port information is shown for a selected
     process.
-
-    Set them to fix the position
-    SHOW_ATX  = 10
-    SHOW_ATY  = 2
-    '''
-    def __init__(self,local_ports,process_pid):
+`   '''
+    #Set them to fix the position
+    SHOW_ATX  = 0
+    SHOW_ATY  = 0
+    DEFAULT_COLUMNS = PREVIOUS_TERMINAL_WIDTH
+    
+    def __init__(self,local_ports,process_pid,open_files):
         self._local_ports = local_ports
         self._process_pid = process_pid
+        self._open_files = open_files
         super(ProcessDetailsInfoBox,self).__init__()
 
     def create(self,**kwargs):
@@ -36,20 +39,31 @@ class ProcessDetailsInfoBox(npyscreen.Popup):
             they are created in the create() method
         '''
         super(ProcessDetailsInfoBox,self).create()
+        
         self._logger = logging.getLogger(__name__)
-        self._logger.info("Showing the local ports {0} used by the process with pid {1}".format(self._local_ports,
-                                                                                                str(self._process_pid))
-                                                                                                )
-        if len(self._local_ports) != 0:
-            self.details_box_heading = self.add(npyscreen.TitleText, name='Ports used by the process {0}'.format(str(self._process_pid)),)
+        self._logger.info("Showing the local ports {0} and files opened and are being used by the process with pid {1}".format(self._local_ports,
+                                                                                         str(self._process_pid)))
+        #logger.info("Showing the local ports {0} and files opened and are being used by the process with pid {1}".format(self._local_ports,str(self._process_pid)))
+                        #             self.details_box_heading = self.add(npyscreen.TitleText, name='No ports used by the process {0}'.format(str(self._process_pid)),)
+                                                                        
+        if len(self._local_ports) != 0 and len(self._open_files)!=0:
+            self.details_box_heading = self.add(npyscreen.TitleText, name='The Ports used by PID {0} are below.'.format(str(self._process_pid)))
             self.details_box = self.add(npyscreen.BufferPager)
             self.details_box.values.extend(self._local_ports)
+            self.details_box.values.extend('\n')
+            self.details_box.values.extend(['Files opened by this process are ..\n'])
+            self.details_box.values.extend('\n')
+            self.details_box.values.extend(self._open_files)
             self.details_box.display()
-        else:
-            self.details_box_heading = self.add(npyscreen.TitleText, name='No ports used by the process {0}'.format(str(self._process_pid)),)
+        elif len(self._local_ports) == 0 and len(self._open_files)!=0:
+            self.details_box_heading = self.add(npyscreen.TitleText, name='Files opened by PID {0} are below. This process is not using any ports.'.format(str(self._process_pid)))
+            self.details_box = self.add(npyscreen.BufferPager)
+            self.details_box.values.extend(self._open_files)
+            self.details_box.display()
 
     def adjust_widgets(self):
         pass
+
 
 
 class ProcessFilterInputBox(npyscreen.Popup):
@@ -134,6 +148,16 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         for proc in self._uncurtailed_process_data:
             if proc['id'] == process_pid:
                 return proc['local_ports']
+                
+    def _list_of_open_files(self,process_pid):
+        """
+            Given the Process ID, return the list of all the open files
+        """
+        files = []
+        p = psutil.Process(process_pid)
+        for i in p.open_files():
+            files.append(i[0])
+        return files
 
     def _sort_by_time(self,*args,**kwargs):
         # fuck .. that's why NPSManaged was required, i.e you can access the app instance within widgets
@@ -179,7 +203,8 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         # self.process_details_view_helper = ProcessDetailsInfoBox(local_ports=['1','2','3'])
         process_pid = self._get_selected_process_pid()
         local_ports = self._get_local_ports_used_by_a_process(process_pid)
-        self.process_details_view_helper = ProcessDetailsInfoBox(local_ports,process_pid)
+        open_files = self._list_of_open_files(process_pid)
+        self.process_details_view_helper = ProcessDetailsInfoBox(local_ports,process_pid,open_files)
         self.process_details_view_helper.owner_widget = weakref.proxy(self)
         self.process_details_view_helper.display()
         self.process_details_view_helper.edit()
@@ -602,7 +627,6 @@ class PtopGUI(npyscreen.NPSApp):
             scaling factors now the dimensions of the CPU_WIDGETS/MEMORY _WIDGETS are used for calculation
             of the dimensions of the charts. There is padding of width 1 between the boundaries of the widgets 
             and the charts
-
             # self.CHART_WIDTH = int(self.CHART_WIDTH*self.X_SCALING_FACTOR)
             # self.CHART_HEIGHT = int(self.CHART_HEIGHT*self.Y_SCALING_FACTOR)
         '''
