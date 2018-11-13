@@ -7,6 +7,7 @@ from .disk_sensor import disk_sensor
 from .memory_sensor import memory_sensor
 from .process_sensor import process_sensor
 from .system_sensor import system_sensor
+from .network_sensor import network_sensor
 
 # Sensors List
 SENSORS_LIST = [
@@ -14,5 +15,6 @@ SENSORS_LIST = [
     disk_sensor,
     memory_sensor,
     process_sensor,
-    system_sensor
+    system_sensor,
+    network_sensor
 ]
