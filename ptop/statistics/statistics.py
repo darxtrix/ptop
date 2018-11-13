@@ -30,9 +30,9 @@ class Statistics:
         '''
             Generate the stats using the plugins list periodically
         '''
-        for i, sensor in enumerate(self.plugins):
+        for sensor in self.plugin:
             # update the sensors value periodically
-            job = ThreadJob(sensor.update,self.stop_event,self.rate[i]/1000)
+            job = ThreadJob(sensor.update,self.stop_event,self.rate[sensor]/1000)
             job.start()
 
 
