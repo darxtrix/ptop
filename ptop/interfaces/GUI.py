@@ -45,21 +45,29 @@ class ProcessDetailsInfoBox(npyscreen.PopupWide):
                                                                                          str(self._process_pid)))
         #logger.info("Showing the local ports {0} and files opened and are being used by the process with pid {1}".format(self._local_ports,str(self._process_pid)))
                         #             self.details_box_heading = self.add(npyscreen.TitleText, name='No ports used by the process {0}'.format(str(self._process_pid)),)
-                                                                        
-        if len(self._local_ports) != 0 and len(self._open_files)!=0:
-            self.details_box_heading = self.add(npyscreen.TitleText, name='The Ports used by PID {0} are below.'.format(str(self._process_pid)))
-            self.details_box = self.add(npyscreen.BufferPager)
+        self.details_box_heading = self.add(npyscreen.TitleText, name='Showing info for process with PID {0}'.format(str(self._process_pid)))
+        self.details_box = self.add(npyscreen.BufferPager)
+        if len(self._local_ports) != 0 and len(self._open_files)!= 0:
+            self.details_box.values.extend(['System ports used by the process are:\n'])
             self.details_box.values.extend(self._local_ports)
             self.details_box.values.extend('\n')
-            self.details_box.values.extend(['Files opened by this process are ..\n'])
+            self.details_box.values.extend(['Files opened by this process are:\n'])
             self.details_box.values.extend('\n')
             self.details_box.values.extend(self._open_files)
-            self.details_box.display()
-        elif len(self._local_ports) == 0 and len(self._open_files)!=0:
-            self.details_box_heading = self.add(npyscreen.TitleText, name='Files opened by PID {0} are below. This process is not using any ports.'.format(str(self._process_pid)))
-            self.details_box = self.add(npyscreen.BufferPager)
+        elif len(self._open_files) != 0:
+            self.details_box.values.extend(['Files opened by this process are:\n'])
             self.details_box.values.extend(self._open_files)
-            self.details_box.display()
+            self.details_box.values.extend('\n')
+            self.details_box.values.extend(['The process is not using any System ports.\n'])
+        elif len(self._local_ports) != 0:
+            self.details_box.values.extend(['System ports used by the process are:\n'])
+            self.details_box.values.extend(self._local_ports)
+            self.details_box.values.extend('\n')
+            self.details_box.values.extend(['No files are opened by this process.\n'])
+        else:
+            self.details_box.values.extend(['No system ports are used and no files are opened by this process.\n'])
+        self.details_box.display()
+
 
     def adjust_widgets(self):
         pass
@@ -149,15 +157,15 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
             if proc['id'] == process_pid:
                 return proc['local_ports']
                 
-    def _list_of_open_files(self,process_pid):
+    def _get_list_of_open_files(self,process_pid):
         """
             Given the Process ID, return the list of all the open files
         """
-        files = []
+        opened_files_by_proces = []
         p = psutil.Process(process_pid)
         for i in p.open_files():
-            files.append(i[0])
-        return files
+            opened_files_by_proces.append(i[0])
+        return opened_files_by_proces
 
     def _sort_by_time(self,*args,**kwargs):
         # fuck .. that's why NPSManaged was required, i.e you can access the app instance within widgets
@@ -203,7 +211,7 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         # self.process_details_view_helper = ProcessDetailsInfoBox(local_ports=['1','2','3'])
         process_pid = self._get_selected_process_pid()
         local_ports = self._get_local_ports_used_by_a_process(process_pid)
-        open_files = self._list_of_open_files(process_pid)
+        open_files = self._get_list_of_open_files(process_pid)
         self.process_details_view_helper = ProcessDetailsInfoBox(local_ports,process_pid,open_files)
         self.process_details_view_helper.owner_widget = weakref.proxy(self)
         self.process_details_view_helper.display()
@@ -214,8 +222,8 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         # Get the PID of the selected process
         pid_to_kill = self._get_selected_process_pid()
         self._logger.info("Terminating process with pid {0}".format(pid_to_kill))
-        target = psutil.Process(int(pid_to_kill))
         try:
+            target = psutil.Process(int(pid_to_kill)) # Handle NoSuchProcessError
             target.terminate()
             self._logger.info("Terminated process with pid {0}".format(pid_to_kill))
         except:
