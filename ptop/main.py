@@ -116,7 +116,7 @@ def main():
         ssrt = (results.ssrt if results.ssrt else 1000)
         ssrt = (1000 if ssrt>1000 else ssrt)
 
-        sensor_rate = [cput, diskt, memt, proct, syst]
+        sensor_rate = [csrt, dsrt, msrt, psrt, ssrt]
         # app wide global stop flag
         global_stop_event = threading.Event()
 
