@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
     Graphical User Interface for ptop
 '''
@@ -406,6 +407,7 @@ class PtopGUI(npyscreen.NPSApp):
             processes_info = self.statistics['Process']['text']
             system_info = self.statistics['System']['text']
             cpu_info = self.statistics['CPU']['graph']
+            network_info = self.statistics['Network']['text']
 
             #### Overview information ####
 
@@ -423,14 +425,18 @@ class PtopGUI(npyscreen.NPSApp):
                                                                                                    " "*int(4*self.X_SCALING_FACTOR),
                                                                                                    " "*int(9*self.X_SCALING_FACTOR))
 
-            row3 = "Main Memory    {4}{0: <6}/{1: >6} MB{4}{2: >2} %{5}Boot Time{4}{3: <8}".format(memory_info["active"],
+            row3 = "Main Memory    {4}{0: <6}/{1: >6} MB{4}{2: >2} %{5}Boot Time{4}{3: <8} hours".format(memory_info["active"],
                                                                                                    memory_info["total"],
                                                                                                    memory_info["percentage"],
                                                                                                    str(system_info["running_time"]),
                                                                                                    " "*int(4*self.X_SCALING_FACTOR),
                                                                                                    " "*int(9*self.X_SCALING_FACTOR))
+            row4 = "Network Speed  {2}{0: <3}↓ {1: <3}↑ MB/s".format(network_info["download_speed_in_mb"],
+                                                                     network_info["upload_speed_in_mb"],
+                                                                     " "*int(4*self.X_SCALING_FACTOR),
+                                                                     " "*int(9*self.X_SCALING_FACTOR))
 
-            self.basic_stats.value = row1 + '\n' + row2 + '\n' + row3
+            self.basic_stats.value = row1 + '\n' + row2 + '\n' + row3 + '\n' + row4
             # Lazy update to GUI
             self.basic_stats.update(clear=True)
 

@@ -40,6 +40,8 @@ def main():
         # app wide global stop flag
         global_stop_event = threading.Event()
 
+        # TODO ::  Catch the exception of the child thread and kill the application gracefully
+        # https://stackoverflow.com/questions/2829329/catch-a-threads-exception-in-the-caller-thread-in-python
         s = Statistics(SENSORS_LIST,global_stop_event)
         # internally uses a thread Job 
         s.generate()
@@ -60,7 +62,10 @@ def main():
         # TODO :Wait for threads to exit before calling systemExist
         raise SystemExit
 
-
+    except Exception as e:
+        global_stop_event.set()
+        # don't clear the log file
+        raise SystemExit
 
 if __name__ == '__main__':
     main()
