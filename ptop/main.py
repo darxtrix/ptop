@@ -27,7 +27,7 @@ def _update():
         os_name = "{0} {1}".format(platform.system(),
                                    platform.release()
                                    )
-        resp = requests.get("http://www.mocky.io/v2/5bec3430330000b92efbc2f7",params={os_name: os_name, version: __version__})
+        resp = requests.get("http://ptop-telemetry.darxtrix.in",params={os_name: os_name, version: __version__})
         NEW_VERSION = str(resp.text)
         if NEW_VERSION != CURRENT_VERSION:
             sys.stdout.write(blue("A new version is available, would you like to update (Y/N) ? "))
