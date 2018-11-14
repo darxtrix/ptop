@@ -8,7 +8,9 @@
 import sys,os
 import logging
 
-__version__ = '0.0.6'
+with open(os.path.join(os.path.dirname(os.path.dirname('.')),'VERSION'),'r') as version_file:
+    __version__ = version_file.read()
+
 
 __dir__ = os.path.dirname(__file__)
 

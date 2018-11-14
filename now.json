@@ -1,0 +1,9 @@
+{
+	"files": [
+		"telemetry.js",
+		"package.json",
+		"package-lock.json",
+		"VERSION"
+	],
+	"version": 1
+}
