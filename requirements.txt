@@ -8,3 +8,4 @@ psutil==5.4.8
 requests==2.20.1
 urllib3==1.24.1
 argparse==1.4.0
+huepy==0.9.8.1

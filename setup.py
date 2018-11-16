@@ -19,6 +19,7 @@ setup(
         "argparse>=1.2.1",
         "drawille>=0.0.4"
     ],
+    data_files=['VERSION','README.md','CONTRIBUTORS.md','LICENSE'],
     entry_points={
         'console_scripts': ['ptop = ptop.main:main']
     },
