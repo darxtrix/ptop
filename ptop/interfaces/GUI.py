@@ -291,7 +291,7 @@ class PtopGUI(npyscreen.NPSApp):
         This controls the rendering of the main window and acts as the registering point
         for all other widgets
     '''
-    def __init__(self,statistics,stop_event,arg):
+    def __init__(self,statistics,stop_event,arg,sensor_refresh_rates):
         self.statistics = statistics
         # Command line arguments passed, currently used for selecting themes
         self.arg = arg
@@ -301,6 +301,8 @@ class PtopGUI(npyscreen.NPSApp):
         self.update_thread = None
         # Flag to check if user is interacting (not used)
         self.is_user_interacting = False
+        # GUI refresh rate should be minimum of all sensor refresh rates
+        self.refresh_rate = min(sensor_refresh_rates.values())
 
         # Main form
         self.window = None 
@@ -662,4 +664,8 @@ class PtopGUI(npyscreen.NPSApp):
 
         # time(ms) to wait for user interactions
         self.keypress_timeout_default = 10
+
+        if self.refresh_rate < 1000:
+            self.keypress_timeout_default = int(self.refresh_rate/100)
+
         self.draw()

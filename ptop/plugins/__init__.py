@@ -14,7 +14,7 @@ SENSORS_LIST = [
     cpu_sensor,
     disk_sensor,
     memory_sensor,
+    network_sensor,
     process_sensor,
     system_sensor,
-    network_sensor
 ]

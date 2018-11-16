@@ -16,7 +16,7 @@ PRIVELAGED_USERS = [
 ]
 
 INVALID_PROCESSES = [
-'zombie'
+	'zombie'
 ]
 
 # This will be overriden by process sensor
