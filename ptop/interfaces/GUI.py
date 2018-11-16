@@ -633,7 +633,7 @@ class PtopGUI(npyscreen.NPSApp):
                                        relx=ACTIONS_WIDGET_REL_X,
                                        rely=ACTIONS_WIDGET_REL_Y
                                        )
-        self.actions.value = "^K:Kill\t\t^N:Memory Sort\t\t^T:Time Sort\t\t^R:Reset\t\tg:Top\t\t^Q:Quit\t\t^F:Filter\t\t^L:Info"
+        self.actions.value = "^K:Kill\t\t^N:Memory Sort\t\t^T:Time Sort\t\t^R:Reset\t\tg:Top\t\t^Q:Quit\t\t^F:Filter\t\t^L:Process Info"
         self.actions.display()
         self.actions.editable = False
 
