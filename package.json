@@ -1,0 +1,32 @@
+{
+  "name": "ptop_telemetry",
+  "version": "1.0.0",
+  "description": "Helper package that facilitate ptop telemetry and rolling updates",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "start": "node ./telemetry.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/darxtrix/ptop.git"
+  },
+  "keywords": [
+    "ptop",
+    "task",
+    "manager",
+    "telemetry"
+  ],
+  "author": "darxtrix",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/darxtrix/ptop/issues"
+  },
+  "homepage": "https://github.com/darxtrix/ptop#readme",
+  "dependencies": {
+    "mongoose": "^5.3.12"
+  }
+}

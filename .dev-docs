@@ -1,0 +1,6 @@
+Now setting up a subdomain
+==========================
+- Set CNAME to alias.zeit.co
+- Verify the ownership of the domain by adding a TXT record
+- $ now domains ls # for listing all the domains managed by now
+- Link to the original tutorial https://zeit.co/docs/v1/getting-started/assign-a-domain-name#4.-using-a-custom-domain-with-a-cname

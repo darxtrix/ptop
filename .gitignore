@@ -60,3 +60,8 @@ target/
 # SFTP config file
 sftp-config.json
 
+# node modules
+node_modules/*
+
+# credentials file
+.env

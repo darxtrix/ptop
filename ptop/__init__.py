@@ -8,9 +8,12 @@
 import sys,os
 import logging
 
-__version__ = '0.0.6'
+__dir__ = os.path.dirname(os.path.abspath(__file__))
 
-__dir__ = os.path.dirname(__file__)
+
+with open(os.path.join(os.path.dirname(__dir__),'VERSION'),'r') as version_file:
+    __version__ = version_file.read()
+
 
 # setting the config
 _log_file = os.path.join(os.path.expanduser('~'),'.ptop.log')
