@@ -11,8 +11,8 @@ An awesome task manager written in python. A more awesome top like thing in your
 
 ## Some Screenshots
 
-<img src="https://github.com/darxtrix/ptop/blob/master/docs/ptop_01.png" alt="ptop usage 01" height="450" width="900" />
-<img src="https://github.com/darxtrix/ptop/blob/master/docs/ptop_02.png" alt="ptop usage 02" height="450" width="900" />
+<img src="https://github.com/darxtrix/ptop/blob/master/docs/ptop_01.png" alt="ptop usage 01"/>
+<img src="https://github.com/darxtrix/ptop/blob/master/docs/ptop_02.png" alt="ptop usage 02" />
 
 
 # Installation
