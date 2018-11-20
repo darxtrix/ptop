@@ -3,31 +3,50 @@
 An awesome task manager written in python. A more awesome top like thing in your terminal !
 
 
-![ptop-image](https://github.com/darxtrix/ptop/blob/master/docs/ptop.gif)
+![ptop-image](https://github.com/darxtrix/ptop/blob/master/docs/ptop_demo.gif)
 
 
 > Inspired by [vtop](https://github.com/MrRio/vtop)
 
-## Installing
 
-*Note: `ptop` is in active development right now, `pip` registry has the outdated `ptop` version Consider [these](https://github.com/darxtrix/ptop#development) instructions if you want to use the updated and bug free`ptop`.*
+## Some Screenshots
+
+![ptop-1](https://github.com/darxtrix/ptop/blob/master/docs/ptop_01.png)
+
+![ptop-2](https://github.com/darxtrix/ptop/blob/master/docs/ptop_02.png)
+
+
+# Installation
+`ptop` is compaible with both Python2.x and Python3.x and is tested on Linux and MaxOSx (should be invoked as root).
 
 ```bash
 $ pip install ptop
 ```
-**Note:** Python 2.X supported yet, no support for python3.
 
-If **Python3** is your system default:
-
-```bash
-pip2.7 install ptop
-```
 
 ## Usage
 
+```bash
+$ ptop
+
+$ ptop -t <theme>   # custom theme
+
+$ ptop -csrt 500    # custom refresh time for cpu stats 
+
+$ ptop -h           # help
 ```
-$ ptop -t <theme>
-```
+
+## Features
+- Killing a process :heavy_check_mark:
+- Showing system ports and files used by a process :heavy_check_mark:
+- Network Monitor :heavy_check_mark:
+- Process search :heavy_check_mark:
+- Sorting on the basis of process lifetime and memory used :heavy_check_mark:
+- Responsiveness with terminal :heavy_check_mark:
+- Custom refresh times for different stats like memory info, process info etc :heavy_check_mark:
+- Rolling version updates :heavy_check_mark:
+
+For suggesting new features please add to this [issue](https://github.com/darxtrix/ptop/issues/29)
 
 
 ## Supported themes
@@ -36,42 +55,15 @@ $ ptop -t <theme>
 - `elegant`    
 - `simple`    
 - `dark`   
-- `light` etc.
-
-## Changelog [updated on 11 Aug 2017]
-
-- [Fixed] version 0.0.6 fixes index errors.[Issue4](https://github.com/darxtrix/ptop/issues/4)
-- [Fixed] A default theme option has been set.[Issue5](https://github.com/darxtrix/ptop/issues/5)
-- Though there are some [known issues](https://github.com/darxtrix/ptop#known-issues) still left. :cold_sweat:
+- `light` 
 
 
-## Some Screenshots
-
-![ptop-1](https://github.com/darxtrix/ptop/blob/master/docs/ptop1.png)
-
-![ptop-2](https://github.com/darxtrix/ptop/blob/master/docs/ptop.png)
-
-![ptop-3](https://github.com/darxtrix/ptop/blob/master/docs/ptop2.png)
-
-
-## Help
-
-```bash
-$ ptop -h
-```
-
-
-## Known Issues
-
-- Sometimes garbage text appears on the screen, press `Ctrl` + `L` to **clear**. (Anybody having idea about this ?)
-- Though ptop is responsive across various terminal sizes as positioning is done according to terminal sizes, but sometimes things may break. If so, then try in a terminal of bigger size.
-
-
-## Development
+## Developing ptop
 
 ```bash
 $ git clone https://github.com/darxtrix/ptop
 $ cd ptop   
+$ pip install -r requirements.txt
 $ python setup.py develop
 ```
 **Note :** ptop will create a log file called `.ptop.log` in the home directory of the user.
@@ -94,11 +86,8 @@ $ python setup.py develop
 ## Contributions
 
 - Pull requests are awesome and always welcome. Please use the [issue tracker](https://github.com/darxtrix/ptop/issues) to report any bugs or file feature requests.
-- I really want to move the project forward to the next stable release but I am kind of busy nowadays, so not able to catch up on things quickly. So, contributions are required and moreover if someone wants to be a core contributor, let's have a quick chat on things. Yeah, send me an email. :smiley:
 
 
 ## License 
 
 MIT © [Ankush Sharma](http://github.com/darxtrix)
-
-
