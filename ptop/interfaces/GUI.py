@@ -522,7 +522,7 @@ class PtopGUI(npyscreen.NPSApp):
         if max_x < MIN_ALLOWED_TERMINAL_WIDTH or \
             max_y < MIN_ALLOWED_TERMINAL_HEIGHT:
             self._logger.info("Terminal sizes than width = 104 and height = 28, exiting")
-            sys.stdout.write("Ptop does not support lower terminal sizes than width = 104 and height = 28. Please resize the terminal and restart.")
+            sys.stdout.write("Ptop does not support terminals with resolution smaller than 104*28. Please resize your terminal and try again.")
             raise KeyboardInterrupt
 
         # Minimum terminal size should be used for scaling
