@@ -15,6 +15,12 @@ from ptop.plugins import SENSORS_LIST
 from ptop.constants import SUPPORTED_THEMES
 from huepy import *
 
+# Backwards compatibility for string input operation
+try:
+    input = raw_input
+except NameError:
+    pass
+
 logger = logging.getLogger('ptop.main')
 
 
