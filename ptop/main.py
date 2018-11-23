@@ -51,7 +51,7 @@ def _update():
                 update_success_status |= os.system('git clone https://github.com/darxtrix/ptop.git /tmp/{0}'.format(source_folder))
                 sys.stdout.write(green("\nInstalling ptop ...\n"))
                 sys.stdout.flush()
-                update_success_status |= os.system('sudo python /tmp/{0}/setup.py install'.format(source_folder))
+                update_success_status |= os.system('cd /tmp/{0}/ && sudo python setup.py install'.format(source_folder))
                 # if we are not successful in updating status
                 if update_success_status != 0: 
                     sys.stdout.write(red("\nError occured while updating ptop.\n"))
