@@ -29,10 +29,10 @@ def _update():
                                    )
         resp = requests.get("https://ptop-telemetry.darxtrix.in", params={'os_name': os_name, 'version': __version__}, timeout=2)
         NEW_VERSION = str(resp.text)
-        if NEW_VERSION != CURRENT_VERSION:
+        if NEW_VERSION != CURRENT_VERSION and resp.status_code == 200:
             sys.stdout.write(blue("A new version is available, would you like to update (Y/N) ? "))
             sys.stdout.flush()
-            user_consent = raw_input()
+            user_consent = input()
             if user_consent.lower() == 'y':
                 logger.info("main.py :: Updating ptop to version {0}".format(NEW_VERSION))
                 # run update instructions
@@ -45,7 +45,7 @@ def _update():
                 update_success_status |= os.system('git clone https://github.com/darxtrix/ptop.git /tmp/{0}'.format(source_folder))
                 sys.stdout.write(green("\nInstalling ptop ...\n"))
                 sys.stdout.flush()
-                update_success_status |= os.system('sudo python /tmp/{0}/ptop/setup.py install'.format(source_folder))
+                update_success_status |= os.system('sudo python /tmp/{0}/setup.py install'.format(source_folder))
                 # if we are not successful in updating status
                 if update_success_status != 0: 
                     sys.stdout.write(red("\nError occured while updating ptop.\n"))
