@@ -1,4 +1,11 @@
-npyscreen==4.9.1
-psutil==3.0.1
-argparse==1.2.1
-drawille==0.0.4
+certifi==2018.10.15
+chardet==3.0.4
+drawille==0.1.0
+idna==2.7
+lehar==0.4
+npyscreen==4.10.5
+psutil==5.4.8
+requests==2.20.1
+urllib3==1.24.1
+argparse==1.4.0
+huepy==0.9.8.1

@@ -3,7 +3,7 @@
     run things as a thread job
 '''
 
-import threading
+import threading,logging
 
 class ThreadJob(threading.Thread):
     def __init__(self,callback,event,interval):
@@ -18,8 +18,11 @@ class ThreadJob(threading.Thread):
         self.callback = callback
         self.event = event
         self.interval = interval
+        self.logger = logging.getLogger(__name__)
         super(ThreadJob,self).__init__()
 
     def run(self):
+        self.logger.info('Started thread job for the sensor {0}'.format(self.callback))
         while not self.event.wait(self.interval):
             self.callback()
+        self.logger.info("Finished thread job {0}".format(self.callback))
