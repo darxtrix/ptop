@@ -5,7 +5,41 @@ Now setting up a subdomain
 - $ now domains ls # for listing all the domains managed by now
 - Link to the original tutorial https://zeit.co/docs/v1/getting-started/assign-a-domain-name#4.-using-a-custom-domain-with-a-cname
 
-including extra files in the egg package
+
+Including extra files in the egg package
 =======================================
 - MANIFEST.in file 
 - data_files list in the setup.py file
+
+
+Building software distribution and wheel package
+=================================================
+Make sure to update the setuptools and the wheel package to latest one
+- Building source distribution
+
+$ python setup.py sdist
+
+- Building wheel package 
+
+$ python setup.py bdist_wheel
+
+
+Uploading to pypi using twine
+=============================
+- Twine will upload all the archives under dist
+- Update the download url in the setup.py file by creating a github release
+- Need to make a ~/.pypirc file for storing credentials https://github.com/pypa/setuptools/issues/941
+
+$ twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
+
+
+Inspecting installation packages
+=================================
+- for data files a folder is created inside the ptop package itself, inspecting wheel package `unzip -l dist/*.whl`
+- Somehow the data files getting assembled in wheel package are not getting copied while installing the package into site packages
+
+ ptop-1.0.0.data/data/*
+
+ - Best practice for data files
+
+- egg-info is used for installation from the software distribution tarball in case we cannot install the wheel package

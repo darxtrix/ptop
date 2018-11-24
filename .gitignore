@@ -65,3 +65,6 @@ node_modules/*
 
 # credentials file
 .env
+
+# PyPi credentials file
+.pypirc

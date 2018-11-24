@@ -50,7 +50,7 @@ setup(
 
     license='MIT',
 
-    download_url= 'https://github.com/darxtrix/ptop/tarball/{0}'.format(__version__), # need to create a git tag for this 
+    download_url= 'https://github.com/darxtrix/ptop/releases/download/v1.0.0/ptop-1.0.0.tar.gz', # need to create a git tag or git release for this 
 
     packages=['ptop', 'ptop.core', 'ptop.plugins', 'ptop.interfaces','ptop.statistics','ptop.utils'],
 
@@ -67,6 +67,8 @@ setup(
     ],
 
     data_files=['VERSION','README.md','CONTRIBUTORS.md','LICENSE'],
+
+    include_package_data=True, # in order to have this files as part of the installation under site packages
 
     entry_points={
         'console_scripts': ['ptop = ptop.main:main']
