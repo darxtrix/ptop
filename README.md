@@ -35,7 +35,7 @@ $ sudo python setup.py install
 
 ## Upgrading ptop
 
-The latest version is 1.0.0. Older versions of `ptop` can be updated using:
+The latest version is 1.0. Older versions of `ptop` can be updated using:
 ```bash
 $ pip install --upgrade ptop
 ```

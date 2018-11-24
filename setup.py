@@ -50,7 +50,7 @@ setup(
 
     license='MIT',
 
-    download_url= 'https://github.com/darxtrix/ptop/releases/download/v1.0.0/ptop-1.0.0.tar.gz', # need to create a git tag or git release for this 
+    download_url= 'https://github.com/darxtrix/ptop/releases/download/v1.0/ptop-1.0.tar.gz', # need to create a git tag or git release for this 
 
     packages=['ptop', 'ptop.core', 'ptop.plugins', 'ptop.interfaces','ptop.statistics','ptop.utils'],
 
