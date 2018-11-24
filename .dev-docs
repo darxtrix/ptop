@@ -5,6 +5,10 @@ Now setting up a subdomain
 - $ now domains ls # for listing all the domains managed by now
 - Link to the original tutorial https://zeit.co/docs/v1/getting-started/assign-a-domain-name#4.-using-a-custom-domain-with-a-cname
 
+Now deploying
+=============
+- now -e <env variables>
+
 
 Including extra files in the egg package
 =======================================
@@ -43,3 +47,11 @@ Inspecting installation packages
  - Best practice for data files
 
 - egg-info is used for installation from the software distribution tarball in case we cannot install the wheel package
+
+Setup.py hacks 
+==============
+- Undo python setup.py develop by using -u flag
+- Undo python setup.py install
+
+$ python setup.py install --record files.txt
+$ cat files.txt | xargs rm -rf
