@@ -10,7 +10,7 @@ import logging
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 
-__version__ = '1.0'
+__version__ = '1.1'
 
 # setting the config
 _log_file = os.path.join(os.path.expanduser('~'),'.ptop.log')

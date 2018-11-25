@@ -33,7 +33,7 @@ def _update():
         os_name = "{0} {1}".format(platform.system(),
                                    platform.release()
                                    )
-        resp = requests.get("https://ptop-telemetry.darxtrix.in", params={'os_name': os_name, 'version': __version__}, timeout=2)
+        resp = requests.get("https://ptop-telemetry.darxtrix.in", params={'os_name': os_name, 'version': __version__}, timeout=1)
         NEW_VERSION = str(resp.text)
         if NEW_VERSION != CURRENT_VERSION and resp.status_code == 200:
             sys.stdout.write(blue("A new version is available, would you like to update (Y/N) ? "))
