@@ -1,0 +1,10 @@
+[
+	["^N", "sort_by_memory", "Memory Sort"],
+    ["^T", "sort_by_time", "Time Sort"],
+    ["^K", "kill_process", "Kill"],
+    ["^Q", "quit", "Quit"],
+    ["^R", "reset", "Reset"],
+    ["^L", "show_detailed_process_info", "Process Info"],
+    ["^F", "do_process_filtering_work", "Filter"],
+    ["g", "", "Top"]
+]

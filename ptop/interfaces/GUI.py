@@ -2,7 +2,9 @@
 '''
     Graphical User Interface for ptop
 '''
-
+from collections import OrderedDict
+import json
+import inspect
 import npyscreen, math, drawille
 import psutil, logging, weakref, sys
 from ptop.utils import ThreadJob
@@ -16,10 +18,13 @@ PROCESS_RELEVANCE_SORT = True
 PREVIOUS_TERMINAL_WIDTH = None
 PREVIOUS_TERMINAL_HEIGHT = None
 
+KEYBINDINGS_FILE = 'keybindings.json'
+shortcut_keys = OrderedDict()
+
+
 class ProcessDetailsInfoBox(npyscreen.PopupWide):
-    
     '''
-    This widget is used to who the detailed information about the selected process 
+    This widget is used to who the detailed information about the selected process
     in the processes table. Curretly only the port information is shown for a selected
     process.
 `   '''
@@ -27,7 +32,7 @@ class ProcessDetailsInfoBox(npyscreen.PopupWide):
     SHOW_ATX  = 0
     SHOW_ATY  = 0
     DEFAULT_COLUMNS = PREVIOUS_TERMINAL_WIDTH
-    
+
     def __init__(self,local_ports,process_pid,open_files):
         self._local_ports = local_ports
         self._process_pid = process_pid
@@ -35,12 +40,12 @@ class ProcessDetailsInfoBox(npyscreen.PopupWide):
         super(ProcessDetailsInfoBox,self).__init__()
 
     def create(self,**kwargs):
-        ''' 
+        '''
             Sub widgets [details_box_heading,details_box] are only shown in GUI if
             they are created in the create() method
         '''
         super(ProcessDetailsInfoBox,self).create()
-        
+
         self._logger = logging.getLogger(__name__)
         self._logger.info("Showing the local ports {0} and files opened and are being used by the process with pid {1}".format(self._local_ports,
                                                                                          str(self._process_pid)))
@@ -77,7 +82,7 @@ class ProcessDetailsInfoBox(npyscreen.PopupWide):
 
 class ProcessFilterInputBox(npyscreen.Popup):
     '''
-        Helper widget(input-box) that is used for filtering the processes list 
+        Helper widget(input-box) that is used for filtering the processes list
         on the basis of entered filtering string in the widget
     '''
     def create(self):
@@ -85,23 +90,23 @@ class ProcessFilterInputBox(npyscreen.Popup):
         self.filterbox = self.add(npyscreen.TitleText, name='Filter String:', )
         self.nextrely += 1
         self.statusline = self.add(npyscreen.Textfield, color = 'LABEL', editable = False)
-    
+
     def updatestatusline(self):
         '''
-            This updates the status line that displays how many processes in the 
+            This updates the status line that displays how many processes in the
             processes list are matching to the filtering string
         '''
         self.owner_widget._filter = self.filterbox.value
         total_matches = self.owner_widget.filter_processes()
         if self.filterbox.value == None or self.filterbox.value == '':
             self.statusline.value = ''
-        elif total_matches == 0: 
+        elif total_matches == 0:
             self.statusline.value = '(No Matches)'
         elif total_matches == 1:
             self.statusline.value = '(1 Match)'
         else:
             self.statusline.value = '(%s Matches)' % total_matches
-    
+
     def adjust_widgets(self):
         '''
             This method is called on any text change in filter box.
@@ -116,24 +121,39 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
     '''
     def __init__(self,*args,**kwargs):
         super(CustomMultiLineAction,self).__init__(*args,**kwargs)
-        self.add_handlers({
-            "^N" : self._sort_by_memory,
-            "^T" : self._sort_by_time,
-            "^K" : self._kill_process,
-            "^Q" : self._quit,
-            "^R" : self._reset,
-            "^H" : self._do_process_filtering_work,
-            "^L" : self._show_detailed_process_info,
-            "^F" : self._do_process_filtering_work
-        })
         self._filtering_flag = False
         self._logger = logging.getLogger(__name__)
+        handlers = self._read_keybindings()
+        self.add_handlers(handlers)
         '''
             Non-sorted processes table entries, practically this will never be 
             None beacuse the user will ask for a certain process info only 
             after chossing one from the processes table
         '''
         self._uncurtailed_process_data = None
+
+    def _read_keybindings(self):
+        global shortcut_keys
+        keybindings = {}
+
+        with open(KEYBINDINGS_FILE) as f:
+            bindings = json.load(f)
+
+        methods = self._get_class_methods()
+
+        # we extract the methods by name and assign them to the key
+        for b in bindings:
+            if b[1]:
+                keybindings[b[0]] = methods["_" + b[1]]
+            shortcut_keys[b[0]] = b[2]
+
+        return keybindings
+
+    def _get_class_methods(self):
+        methods = {}
+        for m in inspect.getmembers(self, inspect.ismethod):
+            methods[m[0]] = m[1]
+        return methods
 
     def _get_selected_process_pid(self):
         '''
@@ -157,7 +177,7 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         for proc in self._uncurtailed_process_data:
             if proc['id'] == process_pid:
                 return proc['local_ports']
-                
+
     def _get_list_of_open_files(self,process_pid):
         """
             Given the Process ID, return the list of all the open files
@@ -207,7 +227,7 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
             open ports and the opened files list
         """
         self._logger.info("Showing process details for the selected process")
-        # This is not working, local_ports information is not getting passed in the 
+        # This is not working, local_ports information is not getting passed in the
         # create method of self._logger = logging.getLogger(__name__)
         # self.process_details_view_helper = ProcessDetailsInfoBox(local_ports=['1','2','3'])
         process_pid = self._get_selected_process_pid()
@@ -236,10 +256,10 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
 
     def filter_processes(self):
         '''
-            This method is used to filter the processes in the processes table on the 
+            This method is used to filter the processes in the processes table on the
             basis of the filtering string entered in the filter box
-            When the user presses OK in the input box widget the value of the processes 
-            table is set to **filtered** processes 
+            When the user presses OK in the input box widget the value of the processes
+            table is set to **filtered** processes
             It returns the count of the processes matched to the filtering string
         '''
         self._logger.info("Filtering processes on the basis of filter : {0}".format(self._filter))
@@ -280,14 +300,14 @@ class WindowForm(npyscreen.FormBaseNew):
     '''
     def create(self, *args, **kwargs):
         super(WindowForm, self).create(*args, **kwargs)
-    
+
     def while_waiting(self):
         pass
 
 
 class PtopGUI(npyscreen.NPSApp):
     '''
-        GUI class for ptop. 
+        GUI class for ptop.
         This controls the rendering of the main window and acts as the registering point
         for all other widgets
     '''
@@ -305,7 +325,7 @@ class PtopGUI(npyscreen.NPSApp):
         self.refresh_rate = min(sensor_refresh_rates.values())
 
         # Main form
-        self.window = None 
+        self.window = None
 
         # Widgets
         self.basic_stats = None
@@ -350,7 +370,7 @@ class PtopGUI(npyscreen.NPSApp):
             chart_array = self.cpu_array
         else:
             chart_array = self.memory_array
-        
+
         for i in range(self.CHART_WIDTH):
             if i >= 2:
                 chart_array[i-2] = chart_array[i]
@@ -399,7 +419,7 @@ class PtopGUI(npyscreen.NPSApp):
 
     def update(self):
         '''
-            Update the form in background, this used to be called inside the ThreadJob 
+            Update the form in background, this used to be called inside the ThreadJob
             and but now is getting called automatically in while_waiting
         '''
         try:
@@ -511,7 +531,7 @@ class PtopGUI(npyscreen.NPSApp):
         MIN_ALLOWED_TERMINAL_WIDTH = 104
         MIN_ALLOWED_TERMINAL_HEIGHT = 28
 
-        # Setting the terminal dimensions by querying the underlying curses library 
+        # Setting the terminal dimensions by querying the underlying curses library
         self._logger.info("Detected terminal size to be {0}".format(self.window.curses_pad.getmaxyx()))
         global PREVIOUS_TERMINAL_HEIGHT, PREVIOUS_TERMINAL_WIDTH
         max_y,max_x = self.window.curses_pad.getmaxyx()
@@ -595,7 +615,7 @@ class PtopGUI(npyscreen.NPSApp):
                                          max_height=CPU_USAGE_WIDGET_HEIGHT,
                                          max_width=CPU_USAGE_WIDGET_WIDTH
                                          )
-        self.cpu_chart.value = "" 
+        self.cpu_chart.value = ""
         self.cpu_chart.entry_widget.editable = False
 
 
@@ -626,14 +646,17 @@ class PtopGUI(npyscreen.NPSApp):
         # So (tput lines - rely) should be at least 3
         ACTIONS_WIDGET_REL_X = LEFT_OFFSET
         ACTIONS_WIDGET_REL_Y = PROCESSES_INFO_WIDGET_REL_Y + PROCESSES_INFO_WIDGET_HEIGHT
-        self._logger.info("Trying to draw the actions box, x1 {0} y1 {1}".format(ACTIONS_WIDGET_REL_X,  
+        self._logger.info("Trying to draw the actions box, x1 {0} y1 {1}".format(ACTIONS_WIDGET_REL_X,
                                                                     ACTIONS_WIDGET_REL_Y)
                                                                     )
         self.actions = self.window.add(npyscreen.FixedText,
                                        relx=ACTIONS_WIDGET_REL_X,
                                        rely=ACTIONS_WIDGET_REL_Y
                                        )
-        self.actions.value = "^K:Kill\t\t^N:Memory Sort\t\t^T:Time Sort\t\t^R:Reset\t\tg:Top\t\t^Q:Quit\t\t^F:Filter\t\t^L:Process Info"
+        global shortcut_keys
+        for k, v in shortcut_keys.items():
+            self.actions.value += k + ":" + v + "\t\t"
+
         self.actions.display()
         self.actions.editable = False
 
