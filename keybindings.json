@@ -1,5 +1,5 @@
 [
-	["^N", "sort_by_memory", "Memory Sort"],
+    ["^N", "sort_by_memory", "Memory Sort"],
     ["^T", "sort_by_time", "Time Sort"],
     ["^K", "kill_process", "Kill"],
     ["^Q", "quit", "Quit"],
