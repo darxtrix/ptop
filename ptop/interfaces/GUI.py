@@ -142,17 +142,17 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         methods = self._get_class_methods()
 
         # we extract the methods by name and assign them to the key
-        for b in bindings:
-            if b[1]:
-                keybindings[b[0]] = methods["_" + b[1]]
-            shortcut_keys[b[0]] = b[2]
+        for binding in bindings:
+            if binding[1]:
+                keybindings[binding[0]] = methods["_" + binding[1]]
+            shortcut_keys[binding[0]] = binding[2]
 
         return keybindings
 
     def _get_class_methods(self):
         methods = {}
-        for m in inspect.getmembers(self, inspect.ismethod):
-            methods[m[0]] = m[1]
+        for method in inspect.getmembers(self, inspect.ismethod):
+            methods[method[0]] = method[1]
         return methods
 
     def _get_selected_process_pid(self):
