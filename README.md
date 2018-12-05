@@ -40,6 +40,8 @@ The latest version is 1.0. Older versions of `ptop` can be updated using:
 $ pip install --upgrade ptop
 ```
 
+Checkout this blog post for more on the latest developments https://medium.com/@darxtrix/releasing-ptop-1-0-a-task-manager-written-using-python-879f63745034
+
 
 ## Usage
 
