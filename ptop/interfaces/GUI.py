@@ -28,13 +28,14 @@ class ProcessDetailsInfoBox(npyscreen.PopupWide):
     SHOW_ATY  = 0
     DEFAULT_COLUMNS = PREVIOUS_TERMINAL_WIDTH
     
-    def __init__(self,local_ports,process_pid,process_name, open_files, child_processes, parent_processes):
+    def __init__(self,local_ports,process_pid,process_name, open_files, child_processes, parent_processes, env_vars):
         self._local_ports = local_ports
         self._process_pid = process_pid
         self._process_name = process_name
         self._open_files = open_files
         self._child_processes = child_processes
         self._parent_processes = parent_processes
+        self._env_vars = env_vars
         super(ProcessDetailsInfoBox,self).__init__()
 
     def create(self,**kwargs):
@@ -76,13 +77,21 @@ class ProcessDetailsInfoBox(npyscreen.PopupWide):
             self.details_box.values.extend(['No System ports are in use\n'])
         self.details_box.values.extend('\n')
 
-        #displays all the local ports in use by process
+        #displays all the Files opened by the process
         self.details_box.values.extend(['Files opened by this process: \n'])
         if(self._open_files):
             self.details_box.values.extend(self._open_files)
         else:
             self.details_box.values.extend(['No Files are opened by this process\n'])
-        self.details_box.values.extend('\n')    
+        self.details_box.values.extend('\n')   
+
+        #displays all the environmental variables used by the process
+        self.details_box.values.extend(['Environmental variables of the process: \n'])
+        if(self._open_files):
+            self.details_box.values.extend(["{0:<25} = {1}".format(key, self._env_vars[key]) for key in list(self._env_vars.keys())])
+        else:
+            self.details_box.values.extend(['No Environmental variables are present\n'])
+        self.details_box.values.extend('\n') 
         
         self.details_box.display()
 
@@ -201,6 +210,14 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         parent_processes = p.parents()
         return parent_processes
 
+    def _get_list_of_env_vars(self, process_pid):
+        """
+            Given the Process ID, return the list of all environmental variables used by the process
+        """
+        p = psutil.Process(process_pid)
+        env_vars = p.environ()
+        return env_vars
+
 
     def _sort_by_time(self,*args,**kwargs):
         # fuck .. that's why NPSManaged was required, i.e you can access the app instance within widgets
@@ -250,7 +267,8 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         open_files = self._get_list_of_open_files(process_pid)
         child_processes = self._get_list_of_child_processes(process_pid)
         parent_processes = self._get_list_of_parent_processes(process_pid)
-        self.process_details_view_helper = ProcessDetailsInfoBox(local_ports, process_pid, process_name, open_files, child_processes, parent_processes)
+        env_vars = self._get_list_of_env_vars(process_pid)
+        self.process_details_view_helper = ProcessDetailsInfoBox(local_ports, process_pid, process_name, open_files, child_processes, parent_processes, env_vars)
         self.process_details_view_helper.owner_widget = weakref.proxy(self)
         self.process_details_view_helper.display()
         self.process_details_view_helper.edit()
