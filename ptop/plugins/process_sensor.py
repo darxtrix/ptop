@@ -67,6 +67,11 @@ class ProcessSensor(Plugin):
                     proc_info['local_ports'] = [x.laddr[1] for x in p.connections()]
                     # Add information of the open files by the process
                     proc_info['open_files'] = p.open_files()
+                    #disk io stats
+                    io_counters = p.io_counters()
+                    disk_io_counters = psutil.disk_io_counters()
+                    proc_info["disk_read"] = 100*(io_counters.read_bytes/disk_io_counters.read_bytes)
+                    proc_info["disk_write"] = 100*(io_counters.write_bytes/disk_io_counters.write_bytes)
                     proc_count += 1
                     # recording the info
                     proc_info_list.append(proc_info)
