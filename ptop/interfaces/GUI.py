@@ -308,7 +308,8 @@ class PtopGUI(npyscreen.NPSApp):
         self.window = None 
 
         # Widgets
-        self.basic_stats = None
+        self.basic_stats1 = None
+        self.basic_stats2 = None
         self.memory_chart = None
         self.cpu_chart = None
         self.gpu_chart = None
@@ -426,6 +427,16 @@ class PtopGUI(npyscreen.NPSApp):
                                                                                                    " "*int(4*self.X_SCALING_FACTOR),
                                                                                                    " "*int(9*self.X_SCALING_FACTOR))
 
+            row11 = "Disk Usage (/) {3}{0: <6}/{1: >6} MB{3}{2: >2} %".format(disk_info["used"],
+                                                                                                   disk_info["total"],
+                                                                                                   disk_info["percentage"],
+                                                                                                   " "*int(4*self.X_SCALING_FACTOR),
+                                                                                                   " "*int(9*self.X_SCALING_FACTOR))
+
+            row12 = "Processes{1}{0: <8}".format(processes_info["running_processes"],
+                                                " "*int(4*self.X_SCALING_FACTOR),
+                                                " "*int(9*self.X_SCALING_FACTOR))
+
             row2 = "Swap Memory    {4}{0: <6}/{1: >6} MB{4}{2: >2} %{5}Threads  {4}{3: <8}".format(swap_info["active"],
                                                                                                    swap_info["total"],
                                                                                                    swap_info["percentage"],
@@ -433,28 +444,54 @@ class PtopGUI(npyscreen.NPSApp):
                                                                                                    " "*int(4*self.X_SCALING_FACTOR),
                                                                                                    " "*int(9*self.X_SCALING_FACTOR))
 
+            row21 = "Swap Memory    {3}{0: <6}/{1: >6} MB{3}{2: >2} %".format(swap_info["active"],
+                                                                                swap_info["total"],
+                                                                                swap_info["percentage"],
+                                                                                " "*int(4*self.X_SCALING_FACTOR),
+                                                                                " "*int(9*self.X_SCALING_FACTOR))
+
+            row22 = "Threads  {1}{0: <8}".format(processes_info["running_threads"],
+                                                " "*int(4*self.X_SCALING_FACTOR),
+                                                " "*int(9*self.X_SCALING_FACTOR))
+
             row3 = "Main Memory    {4}{0: <6}/{1: >6} MB{4}{2: >2} %{5}Boot Time{4}{3: <8} hours".format(memory_info["active"],
                                                                                                    memory_info["total"],
                                                                                                    memory_info["percentage"],
                                                                                                    str(system_info["running_time"]),
                                                                                                    " "*int(4*self.X_SCALING_FACTOR),
                                                                                                    " "*int(9*self.X_SCALING_FACTOR))
-            if(self.statistics['GPU']['text']['number_of_gpus']==0):
-                row4 = "Network Speed  {2}{0: <3}↓ {1: <3}↑ MB/s".format(network_info["download_speed_in_mb"],
+            
+            row31 = "Main Memory    {3}{0: <6}/{1: >6} MB{3}{2: >2} %".format(memory_info["active"],
+                                                                                                   memory_info["total"],
+                                                                                                   memory_info["percentage"],
+                                                                                                   " "*int(4*self.X_SCALING_FACTOR),
+                                                                                                   " "*int(9*self.X_SCALING_FACTOR))
+
+            row32 = "Boot Time{1}{0: <8} hours".format(str(system_info["running_time"]),
+                                                        " "*int(4*self.X_SCALING_FACTOR),
+                                                        " "*int(9*self.X_SCALING_FACTOR))
+
+            row41 = "Network Speed  {2}{0: <3}↓ {1: <3}↑ MB/s".format(network_info["download_speed_in_mb"],
                                                                         network_info["upload_speed_in_mb"],
                                                                         " "*int(4*self.X_SCALING_FACTOR),
                                                                         " "*int(9*self.X_SCALING_FACTOR))
+
+            if(self.statistics['GPU']['text']['number_of_gpus']==0):
+                row42 = "Temperatures{1}CPU:{0: <8}".format(
+                                                                        temp_info['temp'],
+                                                                        " "*int(4*self.X_SCALING_FACTOR),
+                                                                        " "*int(9*self.X_SCALING_FACTOR))
             else:
-                row4 = "Network Speed  {4}{0: <3}↓ {1: <3}↑ MB/s{5}{5} Temperatures GPU:{2},CPU:{3: <8}".format(network_info["download_speed_in_mb"],
-                                                                        network_info["upload_speed_in_mb"],
-                                                                        self.statistics['GPU']['text']['temperature'],
+                row42 = "Temperatures{2}GPU:{0},CPU:{1: <8}".format(self.statistics['GPU']['text']['temperature'],
                                                                         temp_info['temp'],
                                                                         " "*int(4*self.X_SCALING_FACTOR),
                                                                         " "*int(9*self.X_SCALING_FACTOR))
             
-            self.basic_stats.value = row1 + '\n' + row2 + '\n' + row3 + '\n' + row4
+            self.basic_stats1.value = row11 + '\n' + row21 + '\n' + row31 + '\n' + row41
+            self.basic_stats2.value = row12 + '\n' + row22 + '\n' + row32 + '\n' + row42
             # Lazy update to GUI
-            self.basic_stats.update(clear=True)
+            self.basic_stats1.update(clear=True)
+            self.basic_stats2.update(clear=True)
 
 
             ####  CPU Usage information ####
@@ -562,21 +599,30 @@ class PtopGUI(npyscreen.NPSApp):
         OVERVIEW_WIDGET_REL_Y = TOP_OFFSET
         # equivalent to math.ceil =>  [ int(109.89) = 109 ]
         OVERVIEW_WIDGET_HEIGHT = int(6*self.Y_SCALING_FACTOR)
-        OVERVIEW_WIDGET_WIDTH = int(100*self.X_SCALING_FACTOR)
+        OVERVIEW_WIDGET_WIDTH = int(50*self.X_SCALING_FACTOR)
         self._logger.info("Trying to draw Overview information box, x1 {0} x2 {1} y1 {2} y2 {3}".format(OVERVIEW_WIDGET_REL_X,
                                                                                                OVERVIEW_WIDGET_REL_X+OVERVIEW_WIDGET_WIDTH,
                                                                                                OVERVIEW_WIDGET_REL_Y,
                                                                                                OVERVIEW_WIDGET_REL_Y+OVERVIEW_WIDGET_HEIGHT)
                                                                                                )
-        self.basic_stats = self.window.add(MultiLineWidget,
-                                           name="Overview",
+        self.basic_stats1 = self.window.add(MultiLineWidget,
+                                           name="Overview1",
                                            relx=OVERVIEW_WIDGET_REL_X,
                                            rely=OVERVIEW_WIDGET_REL_Y,
                                            max_height=OVERVIEW_WIDGET_HEIGHT,
                                            max_width=OVERVIEW_WIDGET_WIDTH
                                            )
-        self.basic_stats.value = ""
-        self.basic_stats.entry_widget.editable = False
+        self.basic_stats2 = self.window.add(MultiLineWidget,
+                                           name="Overview2",
+                                           relx=OVERVIEW_WIDGET_REL_X+OVERVIEW_WIDGET_WIDTH,
+                                           rely=OVERVIEW_WIDGET_REL_Y,
+                                           max_height=OVERVIEW_WIDGET_HEIGHT,
+                                           max_width=OVERVIEW_WIDGET_WIDTH
+                                           )
+        self.basic_stats1.value = ""
+        self.basic_stats2.value = ""
+        self.basic_stats1.entry_widget.editable = False
+        self.basic_stats2.entry_widget.editable = False
 
 
         ######    Memory Usage widget  #########
@@ -649,7 +695,7 @@ class PtopGUI(npyscreen.NPSApp):
         PROCESSES_INFO_WIDGET_REL_X = LEFT_OFFSET
         PROCESSES_INFO_WIDGET_REL_Y = CPU_USAGE_WIDGET_REL_Y + CPU_USAGE_WIDGET_HEIGHT
         PROCESSES_INFO_WIDGET_HEIGHT = int(8*self.Y_SCALING_FACTOR)
-        PROCESSES_INFO_WIDGET_WIDTH = OVERVIEW_WIDGET_WIDTH
+        PROCESSES_INFO_WIDGET_WIDTH = OVERVIEW_WIDGET_WIDTH*2
         self._logger.info("Trying to draw Processes information box, x1 {0} x2 {1} y1 {2} y2 {3}".format(PROCESSES_INFO_WIDGET_REL_X,
                                                                                                 PROCESSES_INFO_WIDGET_REL_X+PROCESSES_INFO_WIDGET_WIDTH,
                                                                                                 PROCESSES_INFO_WIDGET_REL_Y,
