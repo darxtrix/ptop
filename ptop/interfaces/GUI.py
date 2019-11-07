@@ -648,7 +648,15 @@ class PtopGUI(npyscreen.NPSApp):
                                                                                                 PROCESSES_INFO_WIDGET_REL_Y+PROCESSES_INFO_WIDGET_HEIGHT)
                                                                                                 )
         self.processes_table = self.window.add(MultiLineActionWidget,
-                                               name="───────── Process ────────── PID ─────── user ──────────────────── age ───────── memory ─────── disk_read ──── disk_write ─── ports",
+                                               name="{0} Process {1} PID {0} user {2} age {3} memory {4} disk_read {5} disk_write {5} ports"
+                                               .format("─"*int(6*self.X_SCALING_FACTOR),
+                                                       "─"*int(8*self.X_SCALING_FACTOR),
+                                                       "─"*int(9*self.X_SCALING_FACTOR),
+                                                       "─"*int(11.5*self.X_SCALING_FACTOR),
+                                                       "─"*int(5*self.X_SCALING_FACTOR),
+                                                       "─"*int(3*self.X_SCALING_FACTOR),
+
+                                               ),
                                                relx=PROCESSES_INFO_WIDGET_REL_X,
                                                rely=PROCESSES_INFO_WIDGET_REL_Y,
                                                max_height=PROCESSES_INFO_WIDGET_HEIGHT,
