@@ -28,14 +28,14 @@ class ProcessDetailsInfoBox(npyscreen.PopupWide):
     SHOW_ATY  = 0
     DEFAULT_COLUMNS = PREVIOUS_TERMINAL_WIDTH
     
-    def __init__(self,local_ports,process_pid,process_name, open_files, child_processes, parent_processes, env_vars):
-        self._local_ports = local_ports
-        self._process_pid = process_pid
-        self._process_name = process_name
-        self._open_files = open_files
-        self._child_processes = child_processes
-        self._parent_processes = parent_processes
-        self._env_vars = env_vars
+    def __init__(self,processes_data):
+        self._local_ports = processes_data["local_ports"]
+        self._process_pid = processes_data["process_pid"]
+        self._process_name = processes_data["process_name"]
+        self._open_files = processes_data["open_files"]
+        self._child_processes = processes_data["child_processes"]
+        self._parent_processes = processes_data["parent_processes"]
+        self._env_vars = processes_data["env_vars"]
         super(ProcessDetailsInfoBox,self).__init__()
 
     def create(self,**kwargs):
@@ -268,7 +268,8 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         child_processes = self._get_list_of_child_processes(process_pid)
         parent_processes = self._get_list_of_parent_processes(process_pid)
         env_vars = self._get_list_of_env_vars(process_pid)
-        self.process_details_view_helper = ProcessDetailsInfoBox(local_ports, process_pid, process_name, open_files, child_processes, parent_processes, env_vars)
+        processes_data = {"process_pid":process_pid, "process_name":process_name, "local_ports":local_ports, "open_files":open_files, "child_processes":child_processes, "parent_processes":parent_processes, "env_vars":env_vars}
+        self.process_details_view_helper = ProcessDetailsInfoBox(processes_data)
         self.process_details_view_helper.owner_widget = weakref.proxy(self)
         self.process_details_view_helper.display()
         self.process_details_view_helper.edit()
