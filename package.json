@@ -27,6 +27,6 @@
   },
   "homepage": "https://github.com/darxtrix/ptop#readme",
   "dependencies": {
-    "mongoose": "^5.3.12"
+    "mongoose": "^5.7.5"
   }
 }
