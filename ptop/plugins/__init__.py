@@ -8,6 +8,8 @@ from .memory_sensor import memory_sensor
 from .process_sensor import process_sensor
 from .system_sensor import system_sensor
 from .network_sensor import network_sensor
+from .gpu_sensor import gpu_sensor
+from .temperature_sensor import temperature_sensor
 
 # Sensors List
 SENSORS_LIST = [
@@ -17,4 +19,6 @@ SENSORS_LIST = [
     network_sensor,
     process_sensor,
     system_sensor,
+    gpu_sensor,
+    temperature_sensor,
 ]
