@@ -28,10 +28,14 @@ class ProcessDetailsInfoBox(npyscreen.PopupWide):
     SHOW_ATY  = 0
     DEFAULT_COLUMNS = PREVIOUS_TERMINAL_WIDTH
     
-    def __init__(self,local_ports,process_pid,open_files):
-        self._local_ports = local_ports
-        self._process_pid = process_pid
-        self._open_files = open_files
+    def __init__(self,processes_data):
+        self._local_ports = processes_data["local_ports"]
+        self._process_pid = processes_data["process_pid"]
+        self._process_name = processes_data["process_name"]
+        self._open_files = processes_data["open_files"]
+        self._child_processes = processes_data["child_processes"]
+        self._parent_processes = processes_data["parent_processes"]
+        self._env_vars = processes_data["env_vars"]
         super(ProcessDetailsInfoBox,self).__init__()
 
     def create(self,**kwargs):
@@ -46,27 +50,49 @@ class ProcessDetailsInfoBox(npyscreen.PopupWide):
                                                                                          str(self._process_pid)))
         #logger.info("Showing the local ports {0} and files opened and are being used by the process with pid {1}".format(self._local_ports,str(self._process_pid)))
                         #             self.details_box_heading = self.add(npyscreen.TitleText, name='No ports used by the process {0}'.format(str(self._process_pid)),)
-        self.details_box_heading = self.add(npyscreen.TitleText, name='Showing info for process with PID {0}'.format(str(self._process_pid)))
+        self.details_box_heading = self.add(npyscreen.TitleText, name='Showing info for process {0} with PID {1}'.format(self._process_name, str(self._process_pid)))
         self.details_box = self.add(npyscreen.BufferPager)
-        if len(self._local_ports) != 0 and len(self._open_files)!= 0:
-            self.details_box.values.extend(['System ports used by the process are:\n'])
-            self.details_box.values.extend(self._local_ports)
-            self.details_box.values.extend('\n')
-            self.details_box.values.extend(['Files opened by this process are:\n'])
-            self.details_box.values.extend('\n')
-            self.details_box.values.extend(self._open_files)
-        elif len(self._open_files) != 0:
-            self.details_box.values.extend(['Files opened by this process are:\n'])
-            self.details_box.values.extend(self._open_files)
-            self.details_box.values.extend('\n')
-            self.details_box.values.extend(['The process is not using any System ports.\n'])
-        elif len(self._local_ports) != 0:
-            self.details_box.values.extend(['System ports used by the process are:\n'])
-            self.details_box.values.extend(self._local_ports)
-            self.details_box.values.extend('\n')
-            self.details_box.values.extend(['No files are opened by this process.\n'])
+
+        #displays all the child processes(including children of children)
+        self.details_box.values.extend(['Parent Processes: \n'])
+        if(self._parent_processes):
+            self.details_box.values.extend(["{:<7} - {}".format(parent.pid, parent.name()) for parent in self._parent_processes])
         else:
-            self.details_box.values.extend(['No system ports are used and no files are opened by this process.\n'])
+            self.details_box.values.extend(['No Parent Process \n'])
+        self.details_box.values.extend('\n')
+
+        #displays all the parent processes(including parent of parent)
+        self.details_box.values.extend(['Child Processes: \n'])
+        if(self._child_processes):
+            self.details_box.values.extend(["{:<7} - {}".format(child.pid, child.name()) for child in self._child_processes])
+        else:
+            self.details_box.values.extend(['No child Processes \n'])
+        self.details_box.values.extend('\n')
+
+        #displays all the local ports in use by process
+        self.details_box.values.extend(['System ports in use: \n'])
+        if(self._local_ports):
+            self.details_box.values.extend(self._local_ports)
+        else:
+            self.details_box.values.extend(['No System ports are in use\n'])
+        self.details_box.values.extend('\n')
+
+        #displays all the Files opened by the process
+        self.details_box.values.extend(['Files opened by this process: \n'])
+        if(self._open_files):
+            self.details_box.values.extend(self._open_files)
+        else:
+            self.details_box.values.extend(['No Files are opened by this process\n'])
+        self.details_box.values.extend('\n')   
+
+        #displays all the environmental variables used by the process
+        self.details_box.values.extend(['Environmental variables of the process: \n'])
+        if(self._open_files):
+            self.details_box.values.extend(["{0:<25} = {1}".format(key, self._env_vars[key]) for key in list(self._env_vars.keys())])
+        else:
+            self.details_box.values.extend(['No Environmental variables are present\n'])
+        self.details_box.values.extend('\n') 
+        
         self.details_box.display()
 
 
@@ -168,6 +194,31 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
             opened_files_by_proces.append(i[0])
         return opened_files_by_proces
 
+    def _get_list_of_child_processes(self, process_pid):
+        """
+            Given the Process ID, return the list of all child process
+        """
+        p = psutil.Process(process_pid)
+        child_processes = p.children(recursive=True)
+        return child_processes
+
+    def _get_list_of_parent_processes(self, process_pid):
+        """
+            Given the Process ID, return the list of all parent processes
+        """
+        p = psutil.Process(process_pid)
+        parent_processes = p.parents()
+        return parent_processes
+
+    def _get_list_of_env_vars(self, process_pid):
+        """
+            Given the Process ID, return the list of all environmental variables used by the process
+        """
+        p = psutil.Process(process_pid)
+        env_vars = p.environ()
+        return env_vars
+
+
     def _sort_by_time(self,*args,**kwargs):
         # fuck .. that's why NPSManaged was required, i.e you can access the app instance within widgets
         self._logger.info("Sorting the process table by time")
@@ -211,9 +262,14 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         # create method of self._logger = logging.getLogger(__name__)
         # self.process_details_view_helper = ProcessDetailsInfoBox(local_ports=['1','2','3'])
         process_pid = self._get_selected_process_pid()
+        process_name = psutil.Process(pid=process_pid).name()
         local_ports = self._get_local_ports_used_by_a_process(process_pid)
         open_files = self._get_list_of_open_files(process_pid)
-        self.process_details_view_helper = ProcessDetailsInfoBox(local_ports,process_pid,open_files)
+        child_processes = self._get_list_of_child_processes(process_pid)
+        parent_processes = self._get_list_of_parent_processes(process_pid)
+        env_vars = self._get_list_of_env_vars(process_pid)
+        processes_data = {"process_pid":process_pid, "process_name":process_name, "local_ports":local_ports, "open_files":open_files, "child_processes":child_processes, "parent_processes":parent_processes, "env_vars":env_vars}
+        self.process_details_view_helper = ProcessDetailsInfoBox(processes_data)
         self.process_details_view_helper.owner_widget = weakref.proxy(self)
         self.process_details_view_helper.display()
         self.process_details_view_helper.edit()
@@ -458,7 +514,7 @@ class PtopGUI(npyscreen.NPSApp):
             self.memory_chart.update(clear=True)
 
             #### Processes table ####
-
+            
             self._processes_data = self.statistics['Process']['table']
 
             # check sorting flags
@@ -478,15 +534,16 @@ class PtopGUI(npyscreen.NPSApp):
             # to keep things pre computed
             curtailed_processes_data = []
             for proc in sorted_processes_data:
-                curtailed_processes_data.append("{0: <30} {1: >5}{6}{2: <10}{6}{3}{6}{4: >6.2f} % {6}{5}\
+                curtailed_processes_data.append("{0: <30} {1: >5}{8}{2: <10}{8}{3}{8}{4: >6.2f} % {8}{5: >6.2f} % {8}{6: >6.2f} %{8}{7}\
                 ".format( (proc['name'][:25] + '...') if len(proc['name']) > 25 else proc['name'],
                            proc['id'],
                            proc['user'],
                            proc['time'],
                            proc['memory'],
+                           proc['disk_read'],
+                           proc['disk_write'],
                            proc['local_ports'],
-                           " "*int(5*self.X_SCALING_FACTOR))
-                )
+                           " "*int(5*self.X_SCALING_FACTOR)),)
             if not self.processes_table.entry_widget.is_filtering_on():
                 self.processes_table.entry_widget.values =  curtailed_processes_data
             # Set the processes data dictionary to uncurtailed processes data
@@ -610,7 +667,15 @@ class PtopGUI(npyscreen.NPSApp):
                                                                                                 PROCESSES_INFO_WIDGET_REL_Y+PROCESSES_INFO_WIDGET_HEIGHT)
                                                                                                 )
         self.processes_table = self.window.add(MultiLineActionWidget,
-                                               name="Processes ( name - PID - user - age - memory - system_ports )",
+                                               name="{0} Process {1} PID {0} user {2} age {3} memory {4} disk_read {5} disk_write {5} ports"
+                                               .format("─"*int(6*self.X_SCALING_FACTOR),
+                                                       "─"*int(8*self.X_SCALING_FACTOR),
+                                                       "─"*int(9*self.X_SCALING_FACTOR),
+                                                       "─"*int(11.5*self.X_SCALING_FACTOR),
+                                                       "─"*int(5*self.X_SCALING_FACTOR),
+                                                       "─"*int(3*self.X_SCALING_FACTOR),
+
+                                               ),
                                                relx=PROCESSES_INFO_WIDGET_REL_X,
                                                rely=PROCESSES_INFO_WIDGET_REL_Y,
                                                max_height=PROCESSES_INFO_WIDGET_HEIGHT,
@@ -619,7 +684,6 @@ class PtopGUI(npyscreen.NPSApp):
         self.processes_table.entry_widget.values = []
         self.processes_table.entry_widget.scroll_exit = False
         self.cpu_chart.entry_widget.editable = False
-
 
         ######   Actions widget  #########
         # By default this widget takes 3 lines and 1 line for text and 2 for the invisible boundary lines
