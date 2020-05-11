@@ -157,6 +157,34 @@ def main():
         						For example 500
                             ''')
         
+        parser.add_argument('-gsrt',
+                            dest='gsrt',
+                            action='store',
+                            type=float,
+                            required=False,
+                            help=
+                            '''
+                                GPU sensor response time;
+                                Input sensor
+        						update interval in
+        						milli seconds less than 1000.
+        						For example 500
+                            ''')
+        
+        parser.add_argument('-tsrt',
+                            dest='tsrt',
+                            action='store',
+                            type=float,
+                            required=False,
+                            help=
+                            '''
+                                Temperature sensor response time;
+                                Input sensor
+        						update interval in
+        						milli seconds less than 1000.
+        						For example 500
+                            ''')
+        
         parser.add_argument('-v',
                             action='version',
                             version='ptop {}'.format(__version__))
@@ -175,9 +203,13 @@ def main():
         psrt = (1000 if psrt>1000 else psrt)
         ssrt = (results.ssrt if results.ssrt else 1000)
         ssrt = (1000 if ssrt>1000 else ssrt)
+        gsrt = (results.gsrt if results.gsrt else 1000)
+        gsrt = (1000 if gsrt>1000 else gsrt)
+        tsrt = (results.tsrt if results.tsrt else 1000)
+        tsrt = (1000 if tsrt>1000 else tsrt)
         nsrt = 1000 # network sensor rate is always 1 second
     
-        srts = [csrt, dsrt, msrt, nsrt, psrt, ssrt]
+        srts = [csrt, dsrt, msrt, nsrt, psrt, ssrt, gsrt, tsrt]
         sensor_refresh_rates = {SENSORS_LIST[i]: srts[i] for i in range(len(SENSORS_LIST))}
 
         # try to update ptop

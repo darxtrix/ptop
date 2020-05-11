@@ -61,7 +61,7 @@ class ProcessSensor(Plugin):
                     proc_info['command'] = ' '.join(p.cmdline())
                     # incrementing the thread_count and proc_count
                     thread_count += p.num_threads()
-                    proc_info['cpu'] = p.cpu_percent()
+                    proc_info['cpu'] = round(p.cpu_percent(interval=0.01),2)
                     proc_info['memory'] = round(p.memory_percent(),2)
                     # Add information of the local ports used by the process
                     proc_info['local_ports'] = [x.laddr[1] for x in p.connections()]

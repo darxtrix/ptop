@@ -13,7 +13,7 @@ class CPUSensor(Plugin):
         # there can be many text (key,value) pairs to display corresponding to each key
         self.currentValue['text'] = {}
         # there will be one averaged value
-        self.currentValue['graph'] = {'percentage' : ''}
+        self.currentValue['graph'] = {'percentage' : 0}
 
     # overriding the update method
     def update(self):

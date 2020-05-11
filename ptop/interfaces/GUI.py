@@ -308,9 +308,11 @@ class PtopGUI(npyscreen.NPSApp):
         self.window = None 
 
         # Widgets
-        self.basic_stats = None
+        self.basic_stats1 = None
+        self.basic_stats2 = None
         self.memory_chart = None
         self.cpu_chart = None
+        self.gpu_chart = None
         self.processes_table = None
 
         # Actions bar
@@ -327,6 +329,7 @@ class PtopGUI(npyscreen.NPSApp):
         self.CHART_HEIGHT = None
         self.CHART_WIDTH = None
         self.cpu_array = None
+        self.gpu_array = None
         self.memory_array = None
 
         # logger
@@ -348,6 +351,8 @@ class PtopGUI(npyscreen.NPSApp):
         '''
         if chart_type == 'cpu':
             chart_array = self.cpu_array
+        elif chart_type == 'gpu':
+            chart_array = self.gpu_array
         else:
             chart_array = self.memory_array
         
@@ -409,7 +414,9 @@ class PtopGUI(npyscreen.NPSApp):
             processes_info = self.statistics['Process']['text']
             system_info = self.statistics['System']['text']
             cpu_info = self.statistics['CPU']['graph']
+            gpu_info = self.statistics['GPU']['graph']
             network_info = self.statistics['Network']['text']
+            temp_info = self.statistics['Temperature']['text']
 
             #### Overview information ####
 
@@ -420,6 +427,16 @@ class PtopGUI(npyscreen.NPSApp):
                                                                                                    " "*int(4*self.X_SCALING_FACTOR),
                                                                                                    " "*int(9*self.X_SCALING_FACTOR))
 
+            row11 = "Disk Usage (/) {3}{0: <6}/{1: >6} MB{3}{2: >2} %".format(disk_info["used"],
+                                                                                                   disk_info["total"],
+                                                                                                   disk_info["percentage"],
+                                                                                                   " "*int(4*self.X_SCALING_FACTOR),
+                                                                                                   " "*int(9*self.X_SCALING_FACTOR))
+
+            row12 = "Processes{1}{0: <8}".format(processes_info["running_processes"],
+                                                " "*int(4*self.X_SCALING_FACTOR),
+                                                " "*int(9*self.X_SCALING_FACTOR))
+
             row2 = "Swap Memory    {4}{0: <6}/{1: >6} MB{4}{2: >2} %{5}Threads  {4}{3: <8}".format(swap_info["active"],
                                                                                                    swap_info["total"],
                                                                                                    swap_info["percentage"],
@@ -427,20 +444,54 @@ class PtopGUI(npyscreen.NPSApp):
                                                                                                    " "*int(4*self.X_SCALING_FACTOR),
                                                                                                    " "*int(9*self.X_SCALING_FACTOR))
 
+            row21 = "Swap Memory    {3}{0: <6}/{1: >6} MB{3}{2: >2} %".format(swap_info["active"],
+                                                                                swap_info["total"],
+                                                                                swap_info["percentage"],
+                                                                                " "*int(4*self.X_SCALING_FACTOR),
+                                                                                " "*int(9*self.X_SCALING_FACTOR))
+
+            row22 = "Threads  {1}{0: <8}".format(processes_info["running_threads"],
+                                                " "*int(4*self.X_SCALING_FACTOR),
+                                                " "*int(9*self.X_SCALING_FACTOR))
+
             row3 = "Main Memory    {4}{0: <6}/{1: >6} MB{4}{2: >2} %{5}Boot Time{4}{3: <8} hours".format(memory_info["active"],
                                                                                                    memory_info["total"],
                                                                                                    memory_info["percentage"],
                                                                                                    str(system_info["running_time"]),
                                                                                                    " "*int(4*self.X_SCALING_FACTOR),
                                                                                                    " "*int(9*self.X_SCALING_FACTOR))
-            row4 = "Network Speed  {2}{0: <3}↓ {1: <3}↑ MB/s".format(network_info["download_speed_in_mb"],
-                                                                     network_info["upload_speed_in_mb"],
-                                                                     " "*int(4*self.X_SCALING_FACTOR),
-                                                                     " "*int(9*self.X_SCALING_FACTOR))
+            
+            row31 = "Main Memory    {3}{0: <6}/{1: >6} MB{3}{2: >2} %".format(memory_info["active"],
+                                                                                                   memory_info["total"],
+                                                                                                   memory_info["percentage"],
+                                                                                                   " "*int(4*self.X_SCALING_FACTOR),
+                                                                                                   " "*int(9*self.X_SCALING_FACTOR))
 
-            self.basic_stats.value = row1 + '\n' + row2 + '\n' + row3 + '\n' + row4
+            row32 = "Boot Time{1}{0: <8} hours".format(str(system_info["running_time"]),
+                                                        " "*int(4*self.X_SCALING_FACTOR),
+                                                        " "*int(9*self.X_SCALING_FACTOR))
+
+            row41 = "Network Speed  {2}{0: <3}↓ {1: <3}↑ MB/s".format(network_info["download_speed_in_mb"],
+                                                                        network_info["upload_speed_in_mb"],
+                                                                        " "*int(4*self.X_SCALING_FACTOR),
+                                                                        " "*int(9*self.X_SCALING_FACTOR))
+
+            if(self.statistics['GPU']['text']['number_of_gpus']==0):
+                row42 = "Temperatures{1}CPU:{0: <8}".format(
+                                                                        temp_info['temp'],
+                                                                        " "*int(4*self.X_SCALING_FACTOR),
+                                                                        " "*int(9*self.X_SCALING_FACTOR))
+            else:
+                row42 = "Temperatures{2}GPU:{0},CPU:{1: <8}".format(self.statistics['GPU']['text']['temperature'],
+                                                                        temp_info['temp'],
+                                                                        " "*int(4*self.X_SCALING_FACTOR),
+                                                                        " "*int(9*self.X_SCALING_FACTOR))
+            
+            self.basic_stats1.value = row11 + '\n' + row21 + '\n' + row31 + '\n' + row41
+            self.basic_stats2.value = row12 + '\n' + row22 + '\n' + row32 + '\n' + row42
             # Lazy update to GUI
-            self.basic_stats.update(clear=True)
+            self.basic_stats1.update(clear=True)
+            self.basic_stats2.update(clear=True)
 
 
             ####  CPU Usage information ####
@@ -456,6 +507,13 @@ class PtopGUI(npyscreen.NPSApp):
             next_peak_height = int(math.ceil((float(memory_info['percentage'])/100)*self.CHART_HEIGHT))
             self.memory_chart.value = self.draw_chart(memory_canvas,next_peak_height,'memory')
             self.memory_chart.update(clear=True)
+
+            ####  GPU Usage information ####
+
+            gpu_canvas = drawille.Canvas()
+            next_peak_height = int(math.ceil((float(gpu_info['percentage'])/100)*self.CHART_HEIGHT))
+            self.gpu_chart.value = (self.draw_chart(gpu_canvas,next_peak_height,'gpu'))
+            self.gpu_chart.update(clear=True)
 
             #### Processes table ####
 
@@ -478,14 +536,15 @@ class PtopGUI(npyscreen.NPSApp):
             # to keep things pre computed
             curtailed_processes_data = []
             for proc in sorted_processes_data:
-                curtailed_processes_data.append("{0: <30} {1: >5}{6}{2: <10}{6}{3}{6}{4: >6.2f} % {6}{5}\
+                curtailed_processes_data.append("{0: <30} {1: >5}{6}{2: <10}{6}{3}{6}{4: >6.2f} % {6}{7: >6.2f} % {6}{5}\
                 ".format( (proc['name'][:25] + '...') if len(proc['name']) > 25 else proc['name'],
                            proc['id'],
                            proc['user'],
                            proc['time'],
                            proc['memory'],
                            proc['local_ports'],
-                           " "*int(5*self.X_SCALING_FACTOR))
+                           " "*int(3*self.X_SCALING_FACTOR),
+                           proc['cpu'])
                 )
             if not self.processes_table.entry_widget.is_filtering_on():
                 self.processes_table.entry_widget.values =  curtailed_processes_data
@@ -508,8 +567,8 @@ class PtopGUI(npyscreen.NPSApp):
         self.window = WindowForm(parentApp=self,
                                  name="ptop [http://darxtrix.in/ptop]"
                                  )
-        MIN_ALLOWED_TERMINAL_WIDTH = 104
-        MIN_ALLOWED_TERMINAL_HEIGHT = 28
+        MIN_ALLOWED_TERMINAL_WIDTH = 52
+        MIN_ALLOWED_TERMINAL_HEIGHT = 14
 
         # Setting the terminal dimensions by querying the underlying curses library 
         self._logger.info("Detected terminal size to be {0}".format(self.window.curses_pad.getmaxyx()))
@@ -521,7 +580,7 @@ class PtopGUI(npyscreen.NPSApp):
         # Also make ptop exists cleanly if screen is drawn beyond the lower limit
         if max_x < MIN_ALLOWED_TERMINAL_WIDTH or \
             max_y < MIN_ALLOWED_TERMINAL_HEIGHT:
-            self._logger.info("Terminal sizes than width = 104 and height = 28, exiting")
+            self._logger.info("Terminal sizes less than width = 104 and height = 28, exiting")
             sys.stdout.write("Ptop does not support terminals with resolution smaller than 104*28. Please resize your terminal and try again.")
             raise KeyboardInterrupt
 
@@ -540,28 +599,40 @@ class PtopGUI(npyscreen.NPSApp):
         OVERVIEW_WIDGET_REL_Y = TOP_OFFSET
         # equivalent to math.ceil =>  [ int(109.89) = 109 ]
         OVERVIEW_WIDGET_HEIGHT = int(6*self.Y_SCALING_FACTOR)
-        OVERVIEW_WIDGET_WIDTH = int(100*self.X_SCALING_FACTOR)
+        OVERVIEW_WIDGET_WIDTH = int(50*self.X_SCALING_FACTOR)
         self._logger.info("Trying to draw Overview information box, x1 {0} x2 {1} y1 {2} y2 {3}".format(OVERVIEW_WIDGET_REL_X,
                                                                                                OVERVIEW_WIDGET_REL_X+OVERVIEW_WIDGET_WIDTH,
                                                                                                OVERVIEW_WIDGET_REL_Y,
                                                                                                OVERVIEW_WIDGET_REL_Y+OVERVIEW_WIDGET_HEIGHT)
                                                                                                )
-        self.basic_stats = self.window.add(MultiLineWidget,
-                                           name="Overview",
+        self.basic_stats1 = self.window.add(MultiLineWidget,
+                                           name="Overview1",
                                            relx=OVERVIEW_WIDGET_REL_X,
                                            rely=OVERVIEW_WIDGET_REL_Y,
                                            max_height=OVERVIEW_WIDGET_HEIGHT,
                                            max_width=OVERVIEW_WIDGET_WIDTH
                                            )
-        self.basic_stats.value = ""
-        self.basic_stats.entry_widget.editable = False
+        self.basic_stats2 = self.window.add(MultiLineWidget,
+                                           name="Overview2",
+                                           relx=OVERVIEW_WIDGET_REL_X+OVERVIEW_WIDGET_WIDTH,
+                                           rely=OVERVIEW_WIDGET_REL_Y,
+                                           max_height=OVERVIEW_WIDGET_HEIGHT,
+                                           max_width=OVERVIEW_WIDGET_WIDTH
+                                           )
+        self.basic_stats1.value = ""
+        self.basic_stats2.value = ""
+        self.basic_stats1.entry_widget.editable = False
+        self.basic_stats2.entry_widget.editable = False
 
 
         ######    Memory Usage widget  #########
         MEMORY_USAGE_WIDGET_REL_X = LEFT_OFFSET
         MEMORY_USAGE_WIDGET_REL_Y = OVERVIEW_WIDGET_REL_Y + OVERVIEW_WIDGET_HEIGHT
         MEMORY_USAGE_WIDGET_HEIGHT = int(10*self.Y_SCALING_FACTOR)
-        MEMORY_USAGE_WIDGET_WIDTH = int(50*self.X_SCALING_FACTOR)
+        if(self.statistics['GPU']['text']['number_of_gpus']>0):
+            MEMORY_USAGE_WIDGET_WIDTH = int(35*self.X_SCALING_FACTOR)
+        else:
+            MEMORY_USAGE_WIDGET_WIDTH = int(50*self.X_SCALING_FACTOR)
         self._logger.info("Trying to draw Memory Usage information box, x1 {0} x2 {1} y1 {2} y2 {3}".format(MEMORY_USAGE_WIDGET_REL_X,
                                                                                                    MEMORY_USAGE_WIDGET_REL_X+MEMORY_USAGE_WIDGET_WIDTH,
                                                                                                    MEMORY_USAGE_WIDGET_REL_Y,
@@ -597,20 +668,41 @@ class PtopGUI(npyscreen.NPSApp):
                                          )
         self.cpu_chart.value = "" 
         self.cpu_chart.entry_widget.editable = False
+        
+        ######    GPU Usage widget  #########
+        if(self.statistics['GPU']['text']['number_of_gpus']>0):
+            GPU_USAGE_WIDGET_REL_X = CPU_USAGE_WIDGET_REL_X + CPU_USAGE_WIDGET_WIDTH
+            GPU_USAGE_WIDGET_REL_Y = MEMORY_USAGE_WIDGET_REL_Y
+            GPU_USAGE_WIDGET_HEIGHT = MEMORY_USAGE_WIDGET_HEIGHT
+            GPU_USAGE_WIDGET_WIDTH = int(30*self.X_SCALING_FACTOR)
+            self._logger.info("Trying to draw CPU Usage information box, x1 {0} x2 {1} y1 {2} y2 {3}".format(GPU_USAGE_WIDGET_REL_X,
+                                                                                                    GPU_USAGE_WIDGET_REL_X+GPU_USAGE_WIDGET_WIDTH,
+                                                                                                    GPU_USAGE_WIDGET_REL_Y,
+                                                                                                    GPU_USAGE_WIDGET_REL_Y+GPU_USAGE_WIDGET_HEIGHT)
+                                                                                                    )
+            self.gpu_chart = self.window.add(MultiLineWidget,
+                                            name="GPU Usage",
+                                            relx=GPU_USAGE_WIDGET_REL_X,
+                                            rely=GPU_USAGE_WIDGET_REL_Y,
+                                            max_height=GPU_USAGE_WIDGET_HEIGHT,
+                                            max_width=GPU_USAGE_WIDGET_WIDTH
+                                            )
+            self.gpu_chart.value = ""
+            self.gpu_chart.entry_widget.editable = False
 
 
         ######    Processes Info widget  #########
         PROCESSES_INFO_WIDGET_REL_X = LEFT_OFFSET
         PROCESSES_INFO_WIDGET_REL_Y = CPU_USAGE_WIDGET_REL_Y + CPU_USAGE_WIDGET_HEIGHT
         PROCESSES_INFO_WIDGET_HEIGHT = int(8*self.Y_SCALING_FACTOR)
-        PROCESSES_INFO_WIDGET_WIDTH = OVERVIEW_WIDGET_WIDTH
+        PROCESSES_INFO_WIDGET_WIDTH = OVERVIEW_WIDGET_WIDTH*2
         self._logger.info("Trying to draw Processes information box, x1 {0} x2 {1} y1 {2} y2 {3}".format(PROCESSES_INFO_WIDGET_REL_X,
                                                                                                 PROCESSES_INFO_WIDGET_REL_X+PROCESSES_INFO_WIDGET_WIDTH,
                                                                                                 PROCESSES_INFO_WIDGET_REL_Y,
                                                                                                 PROCESSES_INFO_WIDGET_REL_Y+PROCESSES_INFO_WIDGET_HEIGHT)
                                                                                                 )
         self.processes_table = self.window.add(MultiLineActionWidget,
-                                               name="Processes ( name - PID - user - age - memory - system_ports )",
+                                               name="Processes ( name - PID - user - age - memory - cpu - system_ports )",
                                                relx=PROCESSES_INFO_WIDGET_REL_X,
                                                rely=PROCESSES_INFO_WIDGET_REL_Y,
                                                max_height=PROCESSES_INFO_WIDGET_HEIGHT,
@@ -655,6 +747,7 @@ class PtopGUI(npyscreen.NPSApp):
         # fix for index error
         self.cpu_array = [0]*self.CHART_WIDTH
         self.memory_array = [0]*self.CHART_WIDTH
+        self.gpu_array = [0]*self.CHART_WIDTH
 
         # add subwidgets to the parent widget
         self.window.edit()
