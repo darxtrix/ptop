@@ -22,6 +22,8 @@ class ProcessSensor(Plugin):
         self.currentValue['table'] = []
         self._currentSystemUser = getpass.getuser()
         self._logger = logging.getLogger(__name__)
+        # processes once retrieved from psutil are stored in a list to make cpu percentage measurement possible
+        self._process_list = []
 
     def format_time(self, d):
         ret = '{0} day{1} '.format(d.days, ' s'[d.days > 1]) if d.days else ''
@@ -31,7 +33,7 @@ class ProcessSensor(Plugin):
         s -= m * 60
         return ret + '{0:2d}:{1:02d}:{2:02d}'.format(h, m, s)
 
-    # overriding the upate method
+    # overriding the update method
     def update(self):
         # flood the data
         thread_count = 0 #keep track number of threads
@@ -50,7 +52,7 @@ class ProcessSensor(Plugin):
              because getting further process info for root processes as a normal 
              user will give Permission Denied #10
             '''
-            p = psutil.Process(proc.pid)
+            p = self.retrieve_process_by_pid(proc.pid)
             proc_info['user'] = p.username()
             try:
                 if ((proc_info['user'] == self._currentSystemUser) or (self._currentSystemUser in PRIVELAGED_USERS)) \
@@ -75,16 +77,12 @@ class ProcessSensor(Plugin):
                         SYSTEM_USERS.append(proc_info['user'])
             except:
                 '''
-                    In case ptop does not have privelages to access info for some of the processes
+                    In case ptop does not have privileges to access info for some of the processes
                     just log them and don't show them in the processes table
                 '''
-                self._logger.info('''Not able to get info for process {0} with status {1} invoked by user {2}, ptop
-                                   is invoked by the user {3}'''.format(str(p.pid),
-                                                                        p.status(),
-                                                                        p.username(),
-                                                                        self._currentSystemUser
-                                                                        ),
-                                                                        exc_info=True)
+                self._logger.info(f"""Not able to get info for process {p.pid} with status {p.status()} invoked by user {p.username()}, ptop
+                                   is invoked by the user {self._currentSystemUser}""",
+                                  exc_info=True)
 
         # padding time
         time_len = max((len(proc['time']) for proc in proc_info_list))
@@ -95,6 +93,14 @@ class ProcessSensor(Plugin):
         self.currentValue['table'].extend(proc_info_list)
         self.currentValue['text']['running_processes'] = str(proc_count)
         self.currentValue['text']['running_threads'] = str(thread_count)
+
+    def retrieve_process_by_pid(self, pid):
+        found_processes = [x for x in self._process_list if x.pid == pid]
+        process = found_processes[0] if len(found_processes) > 0 else psutil.Process(pid)
+        if not found_processes and process:
+            self._process_list.append(process)
+        return process
+
 
 # make the process sensor less frequent as it takes more time to fetch info
 process_sensor = ProcessSensor(name='Process',sensorType='table',interval=1)

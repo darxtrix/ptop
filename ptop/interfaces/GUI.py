@@ -478,15 +478,15 @@ class PtopGUI(npyscreen.NPSApp):
             # to keep things pre computed
             curtailed_processes_data = []
             for proc in sorted_processes_data:
-                curtailed_processes_data.append("{0: <30} {1: >5}{6}{2: <10}{6}{3}{6}{4: >6.2f} % {6}{5}\
-                ".format( (proc['name'][:25] + '...') if len(proc['name']) > 25 else proc['name'],
-                           proc['id'],
-                           proc['user'],
-                           proc['time'],
-                           proc['memory'],
-                           proc['local_ports'],
-                           " "*int(5*self.X_SCALING_FACTOR))
-                )
+                curtailed_processes_data.append("{0: <30}{1: >7}{7}{2: <10}{7}{3}{7}{4}{7}{5}{7}{6}\
+                ".format((proc['name'][:25] + '...') if len(proc['name']) > 25 else proc['name'],
+                          proc['id'],
+                          proc['user'],
+                          proc['time'],
+                          self.format_percentage(proc['cpu']),
+                          self.format_percentage(proc['memory']),
+                          proc['local_ports'],
+                          " " * int(5 * self.X_SCALING_FACTOR)))
             if not self.processes_table.entry_widget.is_filtering_on():
                 self.processes_table.entry_widget.values =  curtailed_processes_data
             # Set the processes data dictionary to uncurtailed processes data
@@ -502,6 +502,10 @@ class PtopGUI(npyscreen.NPSApp):
         # cumbersome point of reading the stats data structures
         except KeyError:
             self._logger.info("Some of the stats reading failed",exc_info=True)
+
+    @staticmethod
+    def format_percentage(float_value):
+        return f'{float_value: >6.2f}'.rjust(2, ' ') + ' %'
 
     def draw(self):
         # Setting the main window form
@@ -610,7 +614,7 @@ class PtopGUI(npyscreen.NPSApp):
                                                                                                 PROCESSES_INFO_WIDGET_REL_Y+PROCESSES_INFO_WIDGET_HEIGHT)
                                                                                                 )
         self.processes_table = self.window.add(MultiLineActionWidget,
-                                               name="Processes ( name - PID - user - age - memory - system_ports )",
+                                               name="Processes ( name - PID - user - age - cpu - memory - system_ports )",
                                                relx=PROCESSES_INFO_WIDGET_REL_X,
                                                rely=PROCESSES_INFO_WIDGET_REL_Y,
                                                max_height=PROCESSES_INFO_WIDGET_HEIGHT,
