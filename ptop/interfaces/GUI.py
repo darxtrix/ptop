@@ -2,6 +2,7 @@
 '''
     Graphical User Interface for ptop
 '''
+from enum import Enum
 
 import npyscreen, math, drawille
 import psutil, logging, weakref, sys
@@ -9,10 +10,18 @@ from ptop.utils import ThreadJob
 from ptop.constants import SYSTEM_USERS, SUPPORTED_THEMES
 
 
+class SortOption(Enum):
+    PROCESS_RELEVANCE = 0
+    MEMORY = 1
+    MEMORY_REVERSED = 2
+    TIME = 3
+    TIME_REVERSED = 4
+    CPU = 5
+    CPU_REVERSED = 6
+
+
 # global flags defining actions, would like them to be object vars
-TIME_SORT = False
-MEMORY_SORT = False
-PROCESS_RELEVANCE_SORT = True
+CURRENT_SORTING = SortOption.PROCESS_RELEVANCE
 PREVIOUS_TERMINAL_WIDTH = None
 PREVIOUS_TERMINAL_HEIGHT = None
 
@@ -119,6 +128,7 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         self.add_handlers({
             "^N" : self._sort_by_memory,
             "^T" : self._sort_by_time,
+            "^U" : self._sort_by_cpu,
             "^K" : self._kill_process,
             "^Q" : self._quit,
             "^R" : self._reset,
@@ -171,24 +181,32 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
     def _sort_by_time(self,*args,**kwargs):
         # fuck .. that's why NPSManaged was required, i.e you can access the app instance within widgets
         self._logger.info("Sorting the process table by time")
-        global TIME_SORT,MEMORY_SORT
-        MEMORY_SORT = False
-        TIME_SORT = True
-        PROCESS_RELEVANCE_SORT = False
+        global CURRENT_SORTING
+        if CURRENT_SORTING == SortOption.TIME_REVERSED:
+            CURRENT_SORTING = SortOption.TIME
+        else:
+            CURRENT_SORTING = SortOption.TIME_REVERSED
+
+    def _sort_by_cpu(self,*args,**kwargs):
+        self._logger.info("Sorting the process table by cpu")
+        global CURRENT_SORTING
+        if CURRENT_SORTING == SortOption.CPU_REVERSED:
+            CURRENT_SORTING = SortOption.CPU
+        else:
+            CURRENT_SORTING = SortOption.CPU_REVERSED
 
     def _sort_by_memory(self,*args,**kwargs):
         self._logger.info("Sorting the process table by memory")
-        global TIME_SORT,MEMORY_SORT
-        TIME_SORT = False
-        MEMORY_SORT = True
-        PROCESS_RELEVANCE_SORT = False
+        global CURRENT_SORTING
+        if CURRENT_SORTING == SortOption.MEMORY_REVERSED:
+            CURRENT_SORTING = SortOption.MEMORY
+        else:
+            CURRENT_SORTING = SortOption.MEMORY_REVERSED
 
     def _reset(self,*args,**kwargs):
         self._logger.info("Resetting the process table")
-        global TIME_SORT, MEMORY_SORT
-        TIME_SORT = False
-        MEMORY_SORT = False
-        PROCESS_RELEVANCE_SORT = True
+        global CURRENT_SORTING
+        CURRENT_SORTING = SortOption.PROCESS_RELEVANCE
         self._filtering_flag = False
 
     def _do_process_filtering_work(self,*args,**kwargs):
@@ -462,18 +480,23 @@ class PtopGUI(npyscreen.NPSApp):
             self._processes_data = self.statistics['Process']['table']
 
             # check sorting flags
-            if MEMORY_SORT:
-                sorted_processes_data = sorted(self._processes_data,key=lambda k:k['memory'],reverse=True)
-                self._logger.info("Memory sorting done for process table")
-            elif TIME_SORT:
-                sorted_processes_data = sorted(self._processes_data,key=lambda k:k['rawtime'],reverse=True)
-                self._logger.info("Time sorting done for process table")
-            elif PROCESS_RELEVANCE_SORT:
-                sorted_processes_data = sorted(self._processes_data,key=lambda k:k['rawtime'])
-                self._logger.info("Sorting on the basis of relevance")
+            if CURRENT_SORTING == SortOption.MEMORY:
+                sorted_processes_data = sorted(self._processes_data, key=lambda k: k['memory'], reverse=False)
+            if CURRENT_SORTING == SortOption.MEMORY_REVERSED:
+                sorted_processes_data = sorted(self._processes_data, key=lambda k: k['memory'], reverse=True)
+            elif CURRENT_SORTING == SortOption.TIME:
+                sorted_processes_data = sorted(self._processes_data, key=lambda k: k['rawtime'], reverse=False)
+            elif CURRENT_SORTING == SortOption.TIME_REVERSED:
+                sorted_processes_data = sorted(self._processes_data, key=lambda k: k['rawtime'], reverse=True)
+            elif CURRENT_SORTING == SortOption.CPU:
+                sorted_processes_data = sorted(self._processes_data, key=lambda k: k['cpu'], reverse=False)
+            elif CURRENT_SORTING == SortOption.CPU_REVERSED:
+                sorted_processes_data = sorted(self._processes_data, key=lambda k: k['cpu'], reverse=True)
+            elif CURRENT_SORTING == SortOption.PROCESS_RELEVANCE:
+                sorted_processes_data = sorted(self._processes_data, key=lambda k: k['rawtime'])
             else:
                 sorted_processes_data = self._processes_data
-                self._logger.info("Resetting the sorting behavior")
+            self._logger.info(f"Process table sorted by {CURRENT_SORTING.name}")
 
             # to keep things pre computed
             curtailed_processes_data = []
@@ -637,7 +660,7 @@ class PtopGUI(npyscreen.NPSApp):
                                        relx=ACTIONS_WIDGET_REL_X,
                                        rely=ACTIONS_WIDGET_REL_Y
                                        )
-        self.actions.value = "^K:Kill\t\t^N:Memory Sort\t\t^T:Time Sort\t\t^R:Reset\t\tg:Top\t\t^Q:Quit\t\t^F:Filter\t\t^L:Process Info"
+        self.actions.value = "^K:Kill\t\t^N:Memory Sort\t\t^T:Time Sort\t\t^U:CPU Sort\t\t^R:Reset\t\tg:Top\t\t^Q:Quit\t\t^F:Filter\t\t^L:Process Info"
         self.actions.display()
         self.actions.editable = False
 
