@@ -13,7 +13,9 @@ from ptop.constants import (PRIVELAGED_USERS,
 
 
 class ProcessSensor(Plugin):
-    def __init__(self,**kwargs):
+    PROCESS_LIST_CLEANUP_TICKS = 100
+
+    def __init__(self, **kwargs):
         super(ProcessSensor,self).__init__(**kwargs)
         # there will be two parts of the returned value, one will be text and other graph
         # there can be many text (key,value) pairs to display corresponding to each key
@@ -23,7 +25,8 @@ class ProcessSensor(Plugin):
         self._currentSystemUser = getpass.getuser()
         self._logger = logging.getLogger(__name__)
         # processes once retrieved from psutil are stored in a list to make cpu percentage measurement possible
-        self._process_list = []
+        self._process_list = {}
+        self._tick = 0
 
     def format_time(self, d):
         ret = '{0} day{1} '.format(d.days, ' s'[d.days > 1]) if d.days else ''
@@ -94,11 +97,19 @@ class ProcessSensor(Plugin):
         self.currentValue['text']['running_processes'] = str(proc_count)
         self.currentValue['text']['running_threads'] = str(thread_count)
 
+        self.tick(proc_info_list)
+
+    def tick(self, proc_info_list):
+        self._tick = (self._tick + 1) % ProcessSensor.PROCESS_LIST_CLEANUP_TICKS
+        if self._tick == 0:
+            self._process_list = {key: value for (key, value) in self._process_list.items() if key in [y['id'] for y in proc_info_list]}
+
     def retrieve_process_by_pid(self, pid):
-        found_processes = [x for x in self._process_list if x.pid == pid]
-        process = found_processes[0] if len(found_processes) > 0 else psutil.Process(pid)
-        if not found_processes and process:
-            self._process_list.append(process)
+        try:
+            process = self._process_list[pid]
+        except KeyError:
+            process = psutil.Process(pid)
+            self._process_list[pid] = process
         return process
 
 
