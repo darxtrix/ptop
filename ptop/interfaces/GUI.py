@@ -506,7 +506,7 @@ class PtopGUI(npyscreen.NPSApp):
     def draw(self):
         # Setting the main window form
         self.window = WindowForm(parentApp=self,
-                                 name="ptop [http://darxtrix.in/ptop]"
+                                 name="Task Manager"
                                  )
         MIN_ALLOWED_TERMINAL_WIDTH = 104
         MIN_ALLOWED_TERMINAL_HEIGHT = 28
